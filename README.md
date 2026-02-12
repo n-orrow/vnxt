@@ -1,8 +1,12 @@
-# vnxt
+<p>
+  <img src="docs/logos/vnxt_light_logo.png" alt="vnxt logo" width="200">
+</p>
+
+# vnxt (vx)
 
 A lightweight CLI tool for automated version bumping with changelog generation and git integration.
 
-## Features
+## <img src="logos/caret-38x38.png" width="24" align="center"> Features
 
 - 🚀 Automatic semantic version detection from commit messages
 - 📝 Automatic CHANGELOG.md generation
@@ -13,7 +17,7 @@ A lightweight CLI tool for automated version bumping with changelog generation a
 - ⚙️ Project-level configuration support
 - 💬 Interactive mode when no arguments provided
 
-## Installation
+## <img src="logos/caret-38x38.png" width="24" align="center"> Installation
 
 ### Global Installation
 
@@ -51,7 +55,7 @@ cd vnxt
 npm link
 ```
 
-## Usage
+## <img src="logos/caret-38x38.png" width="24" align="center"> Usage
 
 ### Basic Examples
 
@@ -217,7 +221,7 @@ vx -m "feat: add new API endpoint" -d
 vx -m "feat: add new API endpoint" -c -r -p
 ```
 
-## Configuration
+## <img src="logos/caret-38x38.png" width="24" align="center"> Configuration
 
 Create a `.vnxtrc.json` file in your project root to set defaults:
 ```json
@@ -238,7 +242,7 @@ Create a `.vnxtrc.json` file in your project root to set defaults:
 | `requireCleanWorkingDir` | boolean | `true` | Require clean git working directory before bumping |
 | `autoPush` | boolean | `false` | Automatically push to remote after bumping |
 
-## Pre-flight Checks
+## <img src="logos/caret-38x38.png" width="24" align="center"> Pre-flight Checks
 
 vnxt performs several checks before making changes:
 
@@ -276,7 +280,7 @@ Version type (patch/minor/major) [patch]: minor
 ...
 ```
 
-## Workflow Examples
+## <img src="logos/caret-38x38.png" width="24" align="center"> Workflow Examples
 
 ### Quick Fix
 
@@ -306,7 +310,7 @@ vx -m "BREAKING: new API structure" -c -r -p
 vx -m "chore: refactor code" -a
 ```
 
-## Troubleshooting
+## <img src="logos/caret-38x38.png" width="24" align="center"> Troubleshooting
 
 ### Permission Denied (Windows PowerShell)
 
@@ -340,13 +344,13 @@ npm config get prefix
 # Add the bin subdirectory to your PATH in System Environment Variables
 ```
 
-## Requirements
+## <img src="logos/caret-38x38.png" width="24" align="center"> Requirements
 
 - Node.js 12.x or higher
 - npm 6.x or higher
 - Git installed and configured
 
-## Version Management
+## <img src="logos/caret-38x38.png" width="24" align="center"> Version Management
 
 This project uses [vnxt](https://vnxt.dev) for version bumping with the following configuration:
 
@@ -356,15 +360,15 @@ This project uses [vnxt](https://vnxt.dev) for version bumping with the followin
 
 See `.vnxtrc.json` for full configuration.
 
-## Author
+## <img src="logos/caret-38x38.png" width="24" align="center"> Author
 
 Nate Orrow - Software Developer
 
-## License
+## <img src="logos/caret-38x38.png" width="24" align="center"> License
 
 MIT License - see [LICENSE](LICENSE) file for details
 
-## Contributing
+## <img src="logos/caret-38x38.png" width="24" align="center"> Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
