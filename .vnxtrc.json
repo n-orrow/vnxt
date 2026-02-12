@@ -1,5 +1,5 @@
 {
-  "autoChangelog": false,
+  "autoChangelog": true,
   "defaultType": "patch",
   "requireCleanWorkingDir": false,
   "autoPush": true,

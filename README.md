@@ -351,6 +351,7 @@ npm config get prefix
 This project uses [vnxt](https://vnxt.dev) for version bumping with the following configuration:
 
 - Auto-push enabled (`autoPush: true`)
+- Auto-changelog enabled (`autoChangelog: true`)
 - Clean working directory not required (`requireCleanWorkingDir: false`)
 
 See `.vnxtrc.json` for full configuration.
