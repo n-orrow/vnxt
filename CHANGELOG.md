@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.2] - 2026-02-12
+- patch: re-upload of files
+
+
 ## [1.4.1] - 2026-02-12
 - chore: fixing images on the readme.md and updated .gitignore
 
