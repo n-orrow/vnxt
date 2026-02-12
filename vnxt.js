@@ -35,7 +35,26 @@ let customVersion = getFlag('--version', '-v');
 let dryRun = hasFlag('--dry-run', '-d');
 let push = hasFlag('--push', '-p') || config.autoPush;
 let generateChangelog = hasFlag('--changelog', '-c') || config.autoChangelog;
-const addAll = hasFlag('--all', '-a');
+const addAllFlag = getFlag('--all', '-a');
+let addMode = null; // Will be set to: 'tracked', 'all', 'interactive', 'patch', or null
+if (addAllFlag) {
+    // If -a has a value, use it as the mode
+    if (typeof addAllFlag === 'string') {
+        const mode = addAllFlag.toLowerCase();
+        if (['tracked', 'all', 'a', 'interactive', 'i', 'patch', 'p'].includes(mode)) {
+            if (mode === 'a') addMode = 'all';
+            else if (mode === 'i') addMode = 'interactive';
+            else if (mode === 'p') addMode = 'patch';
+            else addMode = mode;
+        } else {
+            console.error(`Error: Invalid add mode '${addAllFlag}'. Use: tracked, all, interactive (i), or patch (p)`);
+            process.exit(1);
+        }
+    } else {
+        // If -a has no value, default to 'tracked'
+        addMode = 'tracked';
+    }
+}
 let generateReleaseNotes = hasFlag('--release', '-r');
 
 // Interactive mode helper
@@ -87,7 +106,16 @@ async function main() {
 
         // Auto-detect version type from conventional commit format
         if (!customVersion && !getFlag('--type', '-t')) {
-            if (message.startsWith('feat:') || message.startsWith('feature:')) {
+            if (message.startsWith('major:') || message.startsWith('MAJOR:')) {
+                type = 'major';
+                console.log('📝 Auto-detected: major version bump');
+            } else if (message.startsWith('minor:') || message.startsWith('MINOR:')) {
+                type = 'minor';
+                console.log('📝 Auto-detected: minor version bump');
+            } else if (message.startsWith('patch:') || message.startsWith('PATCH:')) {
+                type = 'patch';
+                console.log('📝 Auto-detected: patch version bump');
+            } else if (message.startsWith('feat:') || message.startsWith('feature:')) {
                 type = 'minor';
                 console.log('📝 Auto-detected: minor version bump (feature)');
             } else if (message.startsWith('fix:')) {
@@ -109,17 +137,35 @@ async function main() {
         console.log('\n🔍 Running pre-flight checks...\n');
 
         // Check for uncommitted changes (unless --all is used)
-        if (config.requireCleanWorkingDir && !addAll) {
+        if (config.requireCleanWorkingDir && !addMode) {
             const status = execSync('git status --porcelain --untracked-files=no').toString().trim();
             if (status) {
-                console.error('❌ Error: You have uncommitted changes.');
-                console.log('\nUncommitted files:');
-                console.log(status);
-                console.log('\nOptions:');
-                console.log('  - Commit/stash changes first');
-                console.log('  - Use --all (-a) flag to stage all changes');
-                console.log('  - Set "requireCleanWorkingDir": false in .vnxtrc.json');
-                process.exit(1);
+                // No files staged and changes exist - offer interactive selection
+                console.log('⚠️  You have uncommitted changes.\n');
+                console.log('📁 How would you like to stage files?\n');
+                console.log('  1. Tracked files only (git add -u)');
+                console.log('  2. All changes (git add -A)');
+                console.log('  3. Interactive selection (git add -i)');
+                console.log('  4. Patch mode (git add -p)');
+                console.log('  5. Skip staging (continue without staging)\n');
+
+                const choice = await prompt('Select [1-5]: ');
+
+                if (choice === '1') {
+                    addMode = 'tracked';
+                } else if (choice === '2') {
+                    addMode = 'all';
+                } else if (choice === '3') {
+                    addMode = 'interactive';
+                } else if (choice === '4') {
+                    addMode = 'patch';
+                } else if (choice === '5') {
+                    console.log('⚠️  Skipping file staging. Ensure files are staged manually.');
+                } else {
+                    console.error('Invalid choice. Exiting.');
+                    process.exit(1);
+                }
+                console.log('');
             }
         }
 
@@ -147,8 +193,14 @@ async function main() {
             console.log('🔬 DRY RUN MODE - No changes will be made\n');
             console.log('Would perform the following actions:');
 
-            if (addAll) {
-                console.log('  1. Stage all changes (git add .)');
+            if (addMode) {
+                const modeDescriptions = {
+                    'tracked': 'Stage tracked files only (git add -u)',
+                    'all': 'Stage all changes (git add -A)',
+                    'interactive': 'Interactive selection (git add -i)',
+                    'patch': 'Patch mode (git add -p)'
+                };
+                console.log(`  1. ${modeDescriptions[addMode]}`);
             }
 
             if (customVersion) {
@@ -178,10 +230,23 @@ async function main() {
             process.exit(0);
         }
 
-        // STAGE ALL FILES if requested
-        if (addAll) {
-            console.log('📦 Staging all changes...');
-            execSync('git add .', {stdio: 'inherit'});
+        // STAGE FILES if requested
+        if (addMode) {
+            console.log('📦 Staging files...');
+
+            if (addMode === 'tracked') {
+                // Only stage tracked files that have been modified/deleted
+                execSync('git add -u', {stdio: 'inherit'});
+            } else if (addMode === 'all') {
+                // Stage all changes (respects .gitignore for new files)
+                execSync('git add -A', {stdio: 'inherit'});
+            } else if (addMode === 'interactive') {
+                // Interactive staging
+                execSync('git add -i', {stdio: 'inherit'});
+            } else if (addMode === 'patch') {
+                // Patch mode staging
+                execSync('git add -p', {stdio: 'inherit'});
+            }
         }
         // BUMP VERSION
         console.log(`\n🔼 Bumping version...`);
@@ -323,11 +388,16 @@ Options:
   -p, --push              Push to remote with tags
   -c, --changelog         Update CHANGELOG.md
   -d, --dry-run           Show what would happen without making changes
-  -a, --all               Stage all changes before versioning
+  -a, --all [mode]        Stage files before versioning
+                          Modes: tracked (default), all, interactive (i), patch (p)
+                          If no mode specified, prompts interactively
   -r, --release           Generate release notes file
   -h, --help              Show this help message
 
 Auto-detection:
+  - "major:" → major version
+  - "minor:" → minor version
+  - "patch:" → patch version
   - "feat:" or "feature:" → minor version
   - "fix:" → patch version  
   - "BREAKING" or "breaking:" → major version
@@ -346,6 +416,11 @@ Examples:
   vnxt -m "feat: add new feature" -p -c
   vnxt -v 2.0.0-beta.1 -m "beta release"
   vnxt -m "test" -d
+  vnxt -m "fix: bug" -a               # Interactive prompt for staging
+  vnxt -m "fix: bug" -a tracked       # Stage tracked files only
+  vnxt -m "fix: bug" -a all           # Stage all changes
+  vnxt -m "fix: bug" -a i             # Interactive git add
+  vnxt -m "fix: bug" -a p             # Patch mode
   vnxt (interactive mode)
 `);
     process.exit(0);

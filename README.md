@@ -86,7 +86,8 @@ All options work with both `vnxt` and `vx`:
 -p, --push              Push to remote with tags
 -c, --changelog         Update CHANGELOG.md
 -d, --dry-run           Show what would happen without making changes
--a, --all               Stage all changes before versioning
+-a, --all [mode]        Stage files before versioning (prompts if no mode)
+                        Modes: tracked, all, interactive (i), patch (p)
 -r, --release           Generate release notes file
 -h, --help              Show help message
 ```
@@ -95,6 +96,9 @@ All options work with both `vnxt` and `vx`:
 
 vnxt automatically detects the version bump type from your commit message:
 
+- `major:` → **major** version bump
+- `minor:` → **minor** version bump
+- `patch:` → **patch** version bump
 - `feat:` or `feature:` → **minor** version bump
 - `fix:` → **patch** version bump
 - `BREAKING:` or contains `BREAKING` → **major** version bump
@@ -175,14 +179,29 @@ feat: major feature release
 npm install your-package@1.2.0
 ```
 
-### Stage All Changes
+### File Staging Options
 
-Stage all modified files before bumping:
+vnxt offers flexible file staging with the `-a` flag:
 
 **Bash/PowerShell:**
 ```bash
-vx -m "chore: update dependencies" -a
+# Interactive prompt (asks which mode to use)
+vx -m "chore: update" -a
+
+# Specific modes
+vx -m "fix: bug" -a tracked      # Stage tracked files only (git add -u)
+vx -m "feat: new" -a all         # Stage all changes (git add -A)
+vx -m "refactor: code" -a i      # Interactive selection (git add -i)
+vx -m "fix: typo" -a p           # Patch mode (git add -p)
 ```
+
+**Staging Modes:**
+- `tracked` - Only staged tracked files that have been modified/deleted (default)
+- `all` - Stages all changes, respects `.gitignore` for new files
+- `interactive` or `i` - Opens git's interactive staging mode
+- `patch` or `p` - Opens patch mode for selective staging
+
+**Note:** If you run `vx` without any files staged and without the `-a` flag, vnxt will prompt you interactively to choose a staging mode.
 
 ### Complete Workflow Example
 
