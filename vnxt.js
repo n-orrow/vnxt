@@ -20,7 +20,12 @@ function hasFlag(flag, short) {
 
 // Load config file if exists
 let config = {
-    autoChangelog: false, defaultType: 'patch', requireCleanWorkingDir: true, autoPush: false
+    autoChangelog: true,
+    defaultType: 'patch',
+    requireCleanWorkingDir: false,
+    autoPush: true,
+    defaultStageMode: 'tracked',
+    tagPrefix: 'v'
 };
 
 if (fs.existsSync('.vnxtrc.json')) {
@@ -33,7 +38,8 @@ let message = getFlag('--message', '-m');
 let type = getFlag('--type', '-t') || config.defaultType;
 let customVersion = getFlag('--version', '-v');
 let dryRun = hasFlag('--dry-run', '-d');
-let push = hasFlag('--push', '-p') || config.autoPush;
+let noPush = hasFlag('--no-push', '-dnp');
+let push = noPush ? false : (hasFlag('--push', '-p') || config.autoPush);
 let generateChangelog = hasFlag('--changelog', '-c') || config.autoChangelog;
 const addAllFlag = getFlag('--all', '-a');
 let addMode = null; // Will be set to: 'tracked', 'all', 'interactive', 'patch', or null
@@ -378,24 +384,25 @@ See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 // Show help
 if (hasFlag('--help', '-h')) {
     console.log(`
-vnxt - Version Bump CLI Tool
+vnxt (vx) - Version Bump CLI Tool
 
 Usage:
   vnxt [options]
-  vnxt -m "commit message" [options]
+  vx -m "commit message" [options]
 
 Options:
   -m, --message <msg>      Commit message (required, or use interactive mode)
   -t, --type <type>        Version type: patch, minor, major (auto-detected from message)
   -v, --version <ver>      Set specific version (e.g., 2.0.0-beta.1)
-  -p, --push              Push to remote with tags
-  -c, --changelog         Update CHANGELOG.md
-  -d, --dry-run           Show what would happen without making changes
-  -a, --all [mode]        Stage files before versioning
-                          Modes: tracked (default), all, interactive (i), patch (p)
-                          If no mode specified, prompts interactively
-  -r, --release           Generate release notes file
-  -h, --help              Show this help message
+  -p, --push               Push to remote with tags
+  -dnp, --no-push          Prevent auto-push (overrides config)
+  -c, --changelog          Update CHANGELOG.md
+  -d, --dry-run            Show what would happen without making changes
+  -a, --all [mode]         Stage files before versioning
+                           Modes: tracked (default), all, interactive (i), patch (p)
+                           If no mode specified, prompts interactively
+  -r, --release            Generate release notes file
+  -h, --help               Show this help message
 
 Auto-detection:
   - "major:" → major version
@@ -410,21 +417,24 @@ Configuration:
   {
     "autoChangelog": true,
     "defaultType": "patch",
-    "requireCleanWorkingDir": true,
-    "autoPush": false
+    "requireCleanWorkingDir": false,
+    "autoPush": true,
+    "defaultStageMode": "tracked",
+    "tagPrefix": "v"
   }
 
 Examples:
-  vnxt -m "fix: resolve bug"
-  vnxt -m "feat: add new feature" -p -c
-  vnxt -v 2.0.0-beta.1 -m "beta release"
-  vnxt -m "test" -d
-  vnxt -m "fix: bug" -a               # Interactive prompt for staging
-  vnxt -m "fix: bug" -a tracked       # Stage tracked files only
-  vnxt -m "fix: bug" -a all           # Stage all changes
-  vnxt -m "fix: bug" -a i             # Interactive git add
-  vnxt -m "fix: bug" -a p             # Patch mode
-  vnxt (interactive mode)
+  vx -m "fix: resolve bug"                # Auto-pushes with autoPush: true
+  vx -m "feat: add new feature"           # Auto-pushes with autoPush: true
+  vx -m "fix: bug" -dnp                   # Don't push (override)
+  vx -v 2.0.0-beta.1 -m "beta release"
+  vx -m "test" -d
+  vx -m "fix: bug" -a                     # Interactive prompt for staging
+  vx -m "fix: bug" -a tracked             # Stage tracked files only
+  vx -m "fix: bug" -a all                 # Stage all changes
+  vx -m "fix: bug" -a i                   # Interactive git add
+  vx -m "fix: bug" -a p                   # Patch mode
+  vx                                      # Interactive mode
 `);
     process.exit(0);
 }

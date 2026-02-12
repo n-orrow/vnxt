@@ -346,6 +346,15 @@ npm config get prefix
 - npm 6.x or higher
 - Git installed and configured
 
+## Version Management
+
+This project uses [vnxt](https://vnxt.dev) for version bumping with the following configuration:
+
+- Auto-push enabled (`autoPush: true`)
+- Clean working directory not required (`requireCleanWorkingDir: false`)
+
+See `.vnxtrc.json` for full configuration.
+
 ## Author
 
 Nate Orrow - Software Developer

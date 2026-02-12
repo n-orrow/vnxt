@@ -1,1 +1,8 @@
-{"requireCleanWorkingDir":  false}
+{
+  "autoChangelog": false,
+  "defaultType": "patch",
+  "requireCleanWorkingDir": false,
+  "autoPush": true,
+  "defaultStageMode": "tracked",
+  "tagPrefix": "v"
+}
