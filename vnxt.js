@@ -37,6 +37,7 @@ let push = hasFlag('--push', '-p') || config.autoPush;
 let generateChangelog = hasFlag('--changelog', '-c') || config.autoChangelog;
 const addAllFlag = getFlag('--all', '-a');
 let addMode = null; // Will be set to: 'tracked', 'all', 'interactive', 'patch', or null
+let promptForStaging = false; // If true, prompt user for staging mode
 if (addAllFlag) {
     // If -a has a value, use it as the mode
     if (typeof addAllFlag === 'string') {
@@ -51,8 +52,8 @@ if (addAllFlag) {
             process.exit(1);
         }
     } else {
-        // If -a has no value, default to 'tracked'
-        addMode = 'tracked';
+        // If -a has no value, we'll prompt the user later
+        promptForStaging = true;
     }
 }
 let generateReleaseNotes = hasFlag('--release', '-r');
@@ -136,12 +137,14 @@ async function main() {
         // PRE-FLIGHT CHECKS
         console.log('\n🔍 Running pre-flight checks...\n');
 
-        // Check for uncommitted changes (unless --all is used)
-        if (config.requireCleanWorkingDir && !addMode) {
+        // Check for uncommitted changes OR if user requested staging prompt
+        if ((config.requireCleanWorkingDir && !addMode) || promptForStaging) {
             const status = execSync('git status --porcelain --untracked-files=no').toString().trim();
-            if (status) {
+            if (status || promptForStaging) {
                 // No files staged and changes exist - offer interactive selection
-                console.log('⚠️  You have uncommitted changes.\n');
+                if (status) {
+                    console.log('⚠️  You have uncommitted changes.\n');
+                }
                 console.log('📁 How would you like to stage files?\n');
                 console.log('  1. Tracked files only (git add -u)');
                 console.log('  2. All changes (git add -A)');
