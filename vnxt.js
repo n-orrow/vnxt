@@ -110,7 +110,7 @@ async function main() {
 
         // Check for uncommitted changes (unless --all is used)
         if (config.requireCleanWorkingDir && !addAll) {
-            const status = execSync('git status --porcelain').toString().trim();
+            const status = execSync('git status --porcelain --untracked-files=no').toString().trim();
             if (status) {
                 console.error('❌ Error: You have uncommitted changes.');
                 console.log('\nUncommitted files:');

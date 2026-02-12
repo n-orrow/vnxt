@@ -22,6 +22,12 @@ A lightweight CLI tool for automated version bumping with changelog generation a
 npm install -g vnxt
 ```
 
+After installation, you can use either `vnxt` or the shorter alias `vx`:
+```bash
+vnxt --help
+vx --help  # Same thing, shorter!
+```
+
 ### Local Installation (from source)
 
 **Bash/macOS/Linux:**
@@ -53,21 +59,26 @@ npm link
 ```bash
 # Simple version bump (auto-detects patch from "fix:")
 vnxt -m "fix: resolve RFID reader bug"
+# or use the shorter alias:
+vx -m "fix: resolve RFID reader bug"
 
 # Feature addition (auto-detects minor from "feat:")
-vnxt -m "feat: add heatmap visualization"
+vx -m "feat: add heatmap visualization"
 
 # Breaking change (auto-detects major from "BREAKING")
-vnxt -m "BREAKING: redesign API structure"
+vx -m "BREAKING: redesign API structure"
 
 # With changelog and push to remote
-vnxt -m "feat: add new dashboard" -c -p
+vx -m "feat: add new dashboard" -c -p
 
 # Interactive mode (prompts for input)
-vnxt
+vx
 ```
 
 ### Command Line Options
+
+All options work with both `vnxt` and `vx`:
+
 ```
 -m, --message <msg>      Commit message (required unless using interactive mode)
 -t, --type <type>        Version type: patch, minor, major (auto-detected from message)
@@ -96,7 +107,7 @@ Preview what will happen without making changes:
 
 **Bash/PowerShell:**
 ```bash
-vnxt -m "feat: new feature" -d
+vx -m "feat: new feature" -d
 ```
 
 Output:
@@ -118,8 +129,8 @@ Set a specific version number (useful for pre-releases):
 
 **Bash/PowerShell:**
 ```bash
-vnxt -v 2.0.0-beta.1 -m "beta: initial release candidate"
-vnxt -v 1.5.0-rc.2 -m "release candidate 2"
+vx -v 2.0.0-beta.1 -m "beta: initial release candidate"
+vx -v 1.5.0-rc.2 -m "release candidate 2"
 ```
 
 ### Changelog Generation
@@ -128,7 +139,7 @@ Automatically update CHANGELOG.md with version history:
 
 **Bash/PowerShell:**
 ```bash
-vnxt -m "feat: add user authentication" -c
+vx -m "feat: add user authentication" -c
 ```
 
 Creates/updates CHANGELOG.md:
@@ -148,7 +159,7 @@ Generate a formatted release notes file:
 
 **Bash/PowerShell:**
 ```bash
-vnxt -m "feat: major feature release" -r
+vx -m "feat: major feature release" -r
 ```
 
 Creates `release-notes-v1.2.0.md`:
@@ -170,7 +181,7 @@ Stage all modified files before bumping:
 
 **Bash/PowerShell:**
 ```bash
-vnxt -m "chore: update dependencies" -a
+vx -m "chore: update dependencies" -a
 ```
 
 ### Complete Workflow Example
@@ -181,10 +192,10 @@ vnxt -m "chore: update dependencies" -a
 # ...
 
 # Dry run to preview
-vnxt -m "feat: add new API endpoint" -d
+vx -m "feat: add new API endpoint" -d
 
 # Execute with changelog, release notes, and push
-vnxt -m "feat: add new API endpoint" -c -r -p
+vx -m "feat: add new API endpoint" -c -r -p
 ```
 
 ## Configuration
@@ -226,11 +237,11 @@ Example output:
 
 ## Interactive Mode
 
-Run `vnxt` without arguments for guided prompts:
+Run `vnxt` (or `vx`) without arguments for guided prompts:
 
 **Bash/PowerShell:**
 ```bash
-vnxt
+vx
 ```
 
 Output:
@@ -252,28 +263,28 @@ Version type (patch/minor/major) [patch]: minor
 
 **Bash/PowerShell:**
 ```bash
-vnxt -m "fix: resolve login bug"
+vx -m "fix: resolve login bug"
 ```
 
 ### Feature Release
 
 **Bash/PowerShell:**
 ```bash
-vnxt -m "feat: add dashboard analytics" -c -p
+vx -m "feat: add dashboard analytics" -c -p
 ```
 
 ### Major Release with Full Documentation
 
 **Bash/PowerShell:**
 ```bash
-vnxt -m "BREAKING: new API structure" -c -r -p
+vx -m "BREAKING: new API structure" -c -r -p
 ```
 
 ### Local Development (No Push)
 
 **Bash/PowerShell:**
 ```bash
-vnxt -m "chore: refactor code" -a
+vx -m "chore: refactor code" -a
 ```
 
 ## Troubleshooting
@@ -291,7 +302,7 @@ Either commit your changes first, or use the `-a` flag to stage all changes:
 
 **Bash/PowerShell:**
 ```bash
-vnxt -m "your message" -a
+vx -m "your message" -a
 ```
 
 ### Command Not Found After Installation
