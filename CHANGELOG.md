@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.1] - 2026-02-12
+- chore: fixing images on the readme.md and updated .gitignore
+
+
 ## [1.4.0] - 2026-02-12
 - minor: added docs to replace the readme.md - page will be hosted at vnxt.dev
 

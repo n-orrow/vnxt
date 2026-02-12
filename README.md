@@ -1,12 +1,12 @@
 <p>
-  <img src="docs/logos/vnxt_light_logo.png" alt="vnxt logo" width="200">
+  <img src="./docs/logos/vnxt_light_logo.png" alt="vnxt logo" width="200">
 </p>
 
 # vnxt (vx)
 
 A lightweight CLI tool for automated version bumping with changelog generation and git integration.
 
-## <img src="logos/caret-38x38.png" width="24" align="center"> Features
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Features
 
 - 🚀 Automatic semantic version detection from commit messages
 - 📝 Automatic CHANGELOG.md generation
@@ -17,7 +17,7 @@ A lightweight CLI tool for automated version bumping with changelog generation a
 - ⚙️ Project-level configuration support
 - 💬 Interactive mode when no arguments provided
 
-## <img src="logos/caret-38x38.png" width="24" align="center"> Installation
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Installation
 
 ### Global Installation
 
@@ -55,7 +55,7 @@ cd vnxt
 npm link
 ```
 
-## <img src="logos/caret-38x38.png" width="24" align="center"> Usage
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Usage
 
 ### Basic Examples
 
@@ -221,7 +221,7 @@ vx -m "feat: add new API endpoint" -d
 vx -m "feat: add new API endpoint" -c -r -p
 ```
 
-## <img src="logos/caret-38x38.png" width="24" align="center"> Configuration
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Configuration
 
 Create a `.vnxtrc.json` file in your project root to set defaults:
 ```json
@@ -242,7 +242,7 @@ Create a `.vnxtrc.json` file in your project root to set defaults:
 | `requireCleanWorkingDir` | boolean | `true` | Require clean git working directory before bumping |
 | `autoPush` | boolean | `false` | Automatically push to remote after bumping |
 
-## <img src="logos/caret-38x38.png" width="24" align="center"> Pre-flight Checks
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Pre-flight Checks
 
 vnxt performs several checks before making changes:
 
@@ -280,7 +280,7 @@ Version type (patch/minor/major) [patch]: minor
 ...
 ```
 
-## <img src="logos/caret-38x38.png" width="24" align="center"> Workflow Examples
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Workflow Examples
 
 ### Quick Fix
 
@@ -310,7 +310,7 @@ vx -m "BREAKING: new API structure" -c -r -p
 vx -m "chore: refactor code" -a
 ```
 
-## <img src="logos/caret-38x38.png" width="24" align="center"> Troubleshooting
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Troubleshooting
 
 ### Permission Denied (Windows PowerShell)
 
@@ -344,13 +344,13 @@ npm config get prefix
 # Add the bin subdirectory to your PATH in System Environment Variables
 ```
 
-## <img src="logos/caret-38x38.png" width="24" align="center"> Requirements
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Requirements
 
 - Node.js 12.x or higher
 - npm 6.x or higher
 - Git installed and configured
 
-## <img src="logos/caret-38x38.png" width="24" align="center"> Version Management
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Version Management
 
 This project uses [vnxt](https://vnxt.dev) for version bumping with the following configuration:
 
@@ -360,15 +360,15 @@ This project uses [vnxt](https://vnxt.dev) for version bumping with the followin
 
 See `.vnxtrc.json` for full configuration.
 
-## <img src="logos/caret-38x38.png" width="24" align="center"> Author
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Author
 
 Nate Orrow - Software Developer
 
-## <img src="logos/caret-38x38.png" width="24" align="center"> License
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> License
 
 MIT License - see [LICENSE](LICENSE) file for details
 
-## <img src="logos/caret-38x38.png" width="24" align="center"> Contributing
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
