@@ -1,13 +1,14 @@
 {
   "name": "vnxt",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Version incrementation CLI tool with built in git commit, push and changelog generation",
   "bin": {
     "vnxt": "./vnxt.js",
     "vx": "./vnxt.js"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "release": "vnxt -m 'release' -c -p"
   },
   "keywords": [
     "version",

@@ -57,9 +57,9 @@ function cleanupTestRepo(testDir) {
     }
 }
 
-describe('vbump CLI', () => {
+describe('vnxt CLI', () => {
     const testDir = path.join(__dirname, 'test-repo');
-    const vbumpPath = path.join(__dirname, 'vbump.js');
+    const vnxtPath = path.join(__dirname, 'vnxt.js');
 
     beforeEach(() => {
         createTestRepo(testDir);
@@ -72,7 +72,7 @@ describe('vbump CLI', () => {
     describe('Version Bumping', () => {
         test('should bump patch version', () => {
             const result = execSync(
-                `node ${vbumpPath} -m "fix: test patch"`,
+                `node ${vnxtPath} -m "fix: test patch"`,
                 { cwd: testDir, encoding: 'utf8' }
             );
 
@@ -86,7 +86,7 @@ describe('vbump CLI', () => {
 
         test('should bump minor version', () => {
             execSync(
-                `node ${vbumpPath} -m "feat: test feature" -t minor`,
+                `node ${vnxtPath} -m "feat: test feature" -t minor`,
                 { cwd: testDir }
             );
 
@@ -99,7 +99,7 @@ describe('vbump CLI', () => {
 
         test('should bump major version', () => {
             execSync(
-                `node ${vbumpPath} -m "BREAKING: major change" -t major`,
+                `node ${vnxtPath} -m "BREAKING: major change" -t major`,
                 { cwd: testDir }
             );
 
@@ -112,7 +112,7 @@ describe('vbump CLI', () => {
 
         test('should set custom version', () => {
             execSync(
-                `node ${vbumpPath} -v 2.5.0-beta.1 -m "beta release"`,
+                `node ${vnxtPath} -v 2.5.0-beta.1 -m "beta release"`,
                 { cwd: testDir }
             );
 
@@ -127,7 +127,7 @@ describe('vbump CLI', () => {
     describe('Auto-detection', () => {
         test('should auto-detect patch from "fix:" prefix', () => {
             execSync(
-                `node ${vbumpPath} -m "fix: bug fix"`,
+                `node ${vnxtPath} -m "fix: bug fix"`,
                 { cwd: testDir }
             );
 
@@ -140,7 +140,7 @@ describe('vbump CLI', () => {
 
         test('should auto-detect minor from "feat:" prefix', () => {
             execSync(
-                `node ${vbumpPath} -m "feat: new feature"`,
+                `node ${vnxtPath} -m "feat: new feature"`,
                 { cwd: testDir }
             );
 
@@ -153,7 +153,7 @@ describe('vbump CLI', () => {
 
         test('should auto-detect major from "BREAKING" keyword', () => {
             execSync(
-                `node ${vbumpPath} -m "BREAKING: api change"`,
+                `node ${vnxtPath} -m "BREAKING: api change"`,
                 { cwd: testDir }
             );
 
@@ -168,7 +168,7 @@ describe('vbump CLI', () => {
     describe('Git Integration', () => {
         test('should create git commit', () => {
             execSync(
-                `node ${vbumpPath} -m "fix: test commit" -a`,  // Add -a flag
+                `node ${vnxtPath} -m "fix: test commit" -a`,  // Add -a flag
                 { cwd: testDir }
             );
 
@@ -182,7 +182,7 @@ describe('vbump CLI', () => {
 
         test('should create git tag', () => {
             execSync(
-                `node ${vbumpPath} -m "feat: test tag"`,
+                `node ${vnxtPath} -m "feat: test tag"`,
                 { cwd: testDir }
             );
 
@@ -196,7 +196,7 @@ describe('vbump CLI', () => {
 
         test('should annotate git tag with message', () => {
             execSync(
-                `node ${vbumpPath} -m "fix: annotated tag" -a`,  // Add -a flag
+                `node ${vnxtPath} -m "fix: annotated tag" -a`,  // Add -a flag
                 { cwd: testDir }
             );
 
@@ -220,7 +220,7 @@ describe('vbump CLI', () => {
     describe('Changelog Generation', () => {
         test('should create CHANGELOG.md', () => {
             execSync(
-                `node ${vbumpPath} -m "feat: first feature" -c`,
+                `node ${vnxtPath} -m "feat: first feature" -c`,
                 { cwd: testDir }
             );
 
@@ -230,7 +230,7 @@ describe('vbump CLI', () => {
 
         test('should add entry to CHANGELOG.md', () => {
             execSync(
-                `node ${vbumpPath} -m "feat: test changelog" -c`,
+                `node ${vnxtPath} -m "feat: test changelog" -c`,
                 { cwd: testDir }
             );
 
@@ -247,13 +247,13 @@ describe('vbump CLI', () => {
         test('should append to existing CHANGELOG.md', () => {
             // First bump
             execSync(
-                `node ${vbumpPath} -m "feat: first" -c`,
+                `node ${vnxtPath} -m "feat: first" -c`,
                 { cwd: testDir }
             );
 
             // Second bump
             execSync(
-                `node ${vbumpPath} -m "fix: second" -c`,
+                `node ${vnxtPath} -m "fix: second" -c`,
                 { cwd: testDir }
             );
 
@@ -272,7 +272,7 @@ describe('vbump CLI', () => {
     describe('Release Notes', () => {
         test('should generate release notes file', () => {
             execSync(
-                `node ${vbumpPath} -m "feat: release" -r`,
+                `node ${vnxtPath} -m "feat: release" -r`,
                 { cwd: testDir }
             );
 
@@ -282,7 +282,7 @@ describe('vbump CLI', () => {
 
         test('release notes should contain version and message', () => {
             execSync(
-                `node ${vbumpPath} -m "feat: new release" -r`,
+                `node ${vnxtPath} -m "feat: new release" -r`,
                 { cwd: testDir }
             );
 
@@ -299,7 +299,7 @@ describe('vbump CLI', () => {
     describe('Dry Run Mode', () => {
         test('should not modify version in dry run', () => {
             execSync(
-                `node ${vbumpPath} -m "fix: dry run test" -d`,
+                `node ${vnxtPath} -m "fix: dry run test" -d`,
                 { cwd: testDir }
             );
 
@@ -312,7 +312,7 @@ describe('vbump CLI', () => {
 
         test('should not create commits in dry run', () => {
             execSync(
-                `node ${vbumpPath} -m "fix: dry run commit" -d`,
+                `node ${vnxtPath} -m "fix: dry run commit" -d`,
                 { cwd: testDir }
             );
 
@@ -332,7 +332,7 @@ describe('vbump CLI', () => {
 
             expect(() => {
                 execSync(
-                    `node ${vbumpPath} -m "fix: should fail"`,
+                    `node ${vnxtPath} -m "fix: should fail"`,
                     { cwd: testDir, stdio: 'pipe' }
                 );
             }).toThrow();
@@ -344,7 +344,7 @@ describe('vbump CLI', () => {
 
             expect(() => {
                 execSync(
-                    `node ${vbumpPath} -m "fix: with all flag" -a`,
+                    `node ${vnxtPath} -m "fix: with all flag" -a`,
                     { cwd: testDir }
                 );
             }).not.toThrow();
@@ -358,22 +358,22 @@ describe('vbump CLI', () => {
     });
 
     describe('Configuration File', () => {
-        test('should read .vbumprc.json config', () => {
+        test('should read .vnxtrc.json config', () => {
             const config = {
                 autoChangelog: true,
                 defaultType: 'minor'
             };
 
             fs.writeFileSync(
-                path.join(testDir, '.vbumprc.json'),
+                path.join(testDir, '.vnxtrc.json'),
                 JSON.stringify(config)
             );
 
-            execSync('git add .vbumprc.json', { cwd: testDir });
+            execSync('git add .vnxtrc.json', { cwd: testDir });
             execSync('git commit -m "add config"', { cwd: testDir });
 
             execSync(
-                `node ${vbumpPath} -m "test: config test"`,
+                `node ${vnxtPath} -m "test: config test"`,
                 { cwd: testDir }
             );
 
@@ -392,7 +392,7 @@ describe('vbump CLI', () => {
         test('should require commit message', () => {
             expect(() => {
                 execSync(
-                    `node ${vbumpPath}`,
+                    `node ${vnxtPath}`,
                     { cwd: testDir, stdio: 'pipe', input: '\n\n' }
                 );
             }).toThrow();
@@ -401,7 +401,7 @@ describe('vbump CLI', () => {
         test('should reject invalid version type', () => {
             expect(() => {
                 execSync(
-                    `node ${vbumpPath} -m "test" -t invalid`,
+                    `node ${vnxtPath} -m "test" -t invalid`,
                     { cwd: testDir, stdio: 'pipe' }
                 );
             }).toThrow();
@@ -415,7 +415,7 @@ describe('vbump CLI', () => {
             fs.writeFileSync(path.join(testDir, 'file2.txt'), 'content2');
 
             execSync(
-                `node ${vbumpPath} -m "chore: stage all" -a`,
+                `node ${vnxtPath} -m "chore: stage all" -a`,
                 { cwd: testDir }
             );
 
@@ -433,7 +433,7 @@ describe('vbump CLI', () => {
 // Integration test
 describe('Full Workflow Integration', () => {
     const testDir = path.join(__dirname, 'integration-test');
-    const vbumpPath = path.join(__dirname, 'vbump.js');
+    const vnxtPath = path.join(__dirname, 'vnxt.js');
 
     beforeAll(() => {
         createTestRepo(testDir);
@@ -446,7 +446,7 @@ describe('Full Workflow Integration', () => {
     test('complete workflow: bump, changelog, release notes', () => {
         // First feature
         execSync(
-            `node ${vbumpPath} -m "feat: first feature" -c -r -a`,
+            `node ${vnxtPath} -m "feat: first feature" -c -r -a`,
             { cwd: testDir }
         );
 
@@ -457,7 +457,7 @@ describe('Full Workflow Integration', () => {
 
         // Bug fix
         execSync(
-            `node ${vbumpPath} -m "fix: bug fix" -c -r -a`,
+            `node ${vnxtPath} -m "fix: bug fix" -c -r -a`,
             { cwd: testDir }
         );
 
@@ -468,7 +468,7 @@ describe('Full Workflow Integration', () => {
 
         // Breaking change
         execSync(
-            `node ${vbumpPath} -m "BREAKING: major change" -c -r -a`,
+            `node ${vnxtPath} -m "BREAKING: major change" -c -r -a`,
             { cwd: testDir }
         );
 
