@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.4] - 2026-02-13
+- fix: resolve broken link in /docs/index.html
+
+
 ## [1.4.3] - 2026-02-12
 - fix: resolve broken link in /docs/index.html
 
