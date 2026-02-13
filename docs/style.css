@@ -6,17 +6,17 @@
 
 :root {
     /* Colors from logo */
-    --bg-dark: #000305;
-    --bg-darker: #010101;
-    --text-primary: #c9d1d9;
+    --bg-dark:        #000103;
+    --bg-darker:      #010101;
+    --text-primary:   #c9d1d9;
     --text-secondary: #8b949e;
-    --accent-green: #52d457;
-    --accent-blue: #569cd6;
-    --border: #30363d;
-    
+    --accent-green:   #52d457;
+    --accent-blue:    #569cd6;
+    --border:         #30363d;
+
     /* Fonts */
-    --font-header: "all-round-gothic", sans-serif;
-    --font-mono: "Red Hat Mono", monospace;
+    --font-header:    'all-round-gothic', sans-serif;
+    --font-mono:      'Red Hat Mono', monospace;
 }
 
 @keyframes flicker {
@@ -41,7 +41,7 @@ html {
 
 body {
     position: relative;
-    background: var(--bg-dark);
+    background: linear-gradient( 60deg, #000, var(--bg-dark) );
     font-family: var(--font-mono);
     font-size: 16px;
     line-height: 1.6;
@@ -57,33 +57,15 @@ body {
         overflow: hidden;
         width: 100%;
         height: 100%;
-        background: 
-            repeating-linear-gradient(
-                0deg,
-                rgba(0, 0, 0, 0.15),
-                rgba(0, 0, 0, 0.15) 1px,
-                transparent 1px,
-                transparent 2px
-            );
+        background:
+                repeating-linear-gradient(
+                         0deg,
+                         rgba(0, 0, 0, 0.15),
+                         rgba(0, 0, 0, 0.15) 1px,
+                         transparent 1px,
+                         transparent 2px
+                 );
         animation: flicker 0.15s infinite;
-        pointer-events: none;
-    }
-
-    /* Vignette effect */
-    &::after {
-        content: "";
-        position: fixed;
-        z-index: 9998;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(
-            ellipse at center,
-            transparent 0%,
-            transparent 60%,
-            rgba(0, 0, 0, 0.3) 100%
-        );
         pointer-events: none;
     }
 }
@@ -96,80 +78,103 @@ body {
 
 /* Header */
 header {
-    padding: 4rem 0 3rem;
-    border-bottom: 1px solid var(--border);
-    text-align: center;
-}
-
-.logo {
-    width: 100%;
-    max-width: 400px;
-    height: auto;
-    margin-bottom: 1rem;
-}
-
-.tagline {
-    margin-bottom: 2rem;
-    font-size: 1.2rem;
-    font-weight: 300;
-    color: var(--text-secondary);
-}
-
-.install-command {
-    display: inline-flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 1rem 1.5rem;
-    background: var(--bg-darker);
-    font-size: 1.1rem;
-}
-
-.prompt {
-    font-weight: 600;
-    color: var(--accent-green);
-    text-shadow: 0 0 10px var(--accent-green);
-}
-
-.copy-btn {
-    display: inline-block;
-    border: none;
-    border-radius: 4px;
-    padding: 0.5rem 1rem;
-    background: var(--accent-green);
-    cursor: pointer;
-    transition: opacity 0.2s;
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--bg-darker);
-
-    &:hover {
-        opacity: 0.8;
-    }
-
-    &:active {
-        transform: scale(0.95);
-    }
-}
-
-.quick-links {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
     display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 2rem;
-    margin-top: 2rem;
+    gap: 1rem;
+    padding: 2rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-dark);
+    text-align: center;
 
-    a {
-        transition: color 0.2s;
-        font-weight: 500;
-        text-decoration: none;
-        color: var(--text-primary);
 
-        &:hover {
+    .logo {
+        width: 100%;
+        max-width: 200px;
+        height: auto;
+    }
+
+    .install-command {
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 1rem 1.5rem;
+        background: var(--bg-darker);
+        font-size: 1.1rem;
+        .prompt {
+            font-weight: 600;
             color: var(--accent-green);
+            text-shadow: 0 0 10px var(--accent-green);
         }
+        .copy-btn {
+            display: inline-block;
+            border: none;
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            background: var(--accent-green);
+            box-shadow: 0 0 1px rgb(from var(--accent-green) r g b / 0.3);
+            cursor: pointer;
+            transition: all .8s;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--bg-darker);
+
+            &:hover {
+                box-shadow: 0 0 2rem rgb(from var(--accent-green) r g b / 0.5);
+                transition: all .2s;
+            }
+
+            &:active {
+                transform: scale(0.95);
+            }
+        }
+    }
+
+    .quick-links {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+
+        a {
+            transition: color 0.2s;
+            font-weight: 500;
+            text-decoration: none;
+            color: var(--text-primary);
+
+            &:hover {
+                color: var(--accent-green);
+            }
+        }
+    }
+
+}
+
+/* Desktop header layout */
+@media (min-width: 769px) {
+    header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 2rem;
+
+        .logo {
+            margin-bottom: 0;
+        }
+    }
+}
+
+/* Mobile: not sticky */
+@media (max-width: 768px) {
+    header {
+        position: relative;
+        flex-direction: column;
     }
 }
 
@@ -221,25 +226,18 @@ h3 {
 .feature,
 .demo {
     position: relative;
+    z-index: 1;
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--bg-darker);
     box-shadow: 0 0 1px rgb(from var(--accent-green) r g b / 0.1);
-    /*filter: drop-shadow(0 0 2px rgb(from var(--accent-green) r g b / 0.1));*/
     transition: all .8s;
 
-    z-index: 1;
-
     &:hover {
+        z-index: -1;
         border-color: var(--accent-green);
         box-shadow: 0 0 2rem rgb(from var(--accent-green) r g b / 0.2);
-        /*filter: drop-shadow(0 0 2rem rgb(from var(--accent-green) r g b / 0.2));*/
         transition: all .2s;
-        z-index: -1;
-    }
-
-    span, h3, p {
-        pointer-events: none;
     }
 }
 
@@ -440,32 +438,92 @@ footer {
     .container {
         padding: 0 1rem;
     }
-    
+
     h2 {
         font-size: 2rem;
     }
-    
+
     .logo {
         max-width: 300px;
     }
-    
+
     .feature-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .option-row {
         grid-template-columns: 1fr;
         gap: 0.5rem;
     }
-    
+
     .quick-links {
         flex-direction: column;
         gap: 1rem;
     }
-    
+
     .install-command {
         flex-direction: column;
         width: 100%;
         text-align: left;
+    }
+}
+
+/* Tabs */
+.tabs {
+    margin-top: 2rem;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+    position: relative;
+    z-index: 1;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.75rem 1.5rem;
+    background: var(--bg-dark);
+    box-shadow: 0 0 1px rgb(from var(--accent-green) r g b / 0);
+    cursor: pointer;
+    transition: all .8s;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+
+    &:hover {
+        box-shadow: 0 0 1rem rgb(from var(--accent-green) r g b / 0.2);
+        transition: all .2s;
+        color: var(--text-primary);
+    }
+
+    &.active {
+        border-bottom-color: var(--accent-green);
+        color: var(--accent-green);
+    }
+}
+
+.tab-content {
+    display: none;
+
+    &.active {
+        display: block;
+    }
+
+    h3:first-child {
+        margin-top: 0;
+    }
+}
+
+/* Lists */
+ul {
+    margin: 1rem 0 1rem 2rem;
+
+    li {
+        margin: 0.5rem 0;
+        color: var(--text-secondary);
     }
 }

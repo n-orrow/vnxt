@@ -4,187 +4,295 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>vnxt - Version management made simple</title>
-    <meta name="description" content="A lightweight CLI tool for automated version bumping with changelog generation and git integration.">
+    <meta name="description"
+          content="A lightweight CLI tool for automated version bumping with changelog generation and git integration.">
 
     <link rel="icon" type="image/png" href="logos/caret-38x38.png">
-    
+
     <!-- Fonts -->
     <link rel="stylesheet" href="https://use.typekit.net/mux4cfe.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:ital,wght@0,300..700;1,300..700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:ital,wght@0,300..700;1,300..700&display=swap"
+          rel="stylesheet">
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <div class="container">
-            <img src="logos/vnxt_light_logo.png" alt="vnxt" class="logo">
-            <p class="tagline">Version management made simple</p>
-            
-            <div class="install-command">
-                <span class="prompt">$</span> npm install -g vnxt
-                <button class="copy-btn" onclick="copyToClipboard('npm install -g vnxt')">Copy</button>
+<header>
+    <div class="header-logo">
+        <img src="logos/vnxt_light_logo.png" alt="vnxt" class="logo">
+    </div>
+
+    <div class="install-command">
+        <span class="prompt">$</span> npm install -g vnxt
+        <button class="copy-btn" onclick="copyToClipboard('npm install -g vnxt')">Copy</button>
+    </div>
+
+    <div class="quick-links">
+        <a href="https://github.com/n-orrow/vnxt" target="_blank">GitHub</a>
+        <a href="#installation">Install</a>
+        <a href="#docs">Docs</a>
+    </div>
+</header>
+
+<main class="container">
+    <section id="features">
+        <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Features</h2>
+        <div class="feature-grid">
+            <div class="feature">
+                <span class="emoji">🚀</span>
+                <h3>Automatic Semantic Versioning</h3>
+                <p>Detects version bumps from conventional commit messages</p>
             </div>
-            
-            <div class="quick-links">
-                <a href="https://github.com/n-orrow/vnxt" target="_blank">GitHub</a>
-                <!--<a href="https://www.npmjs.com/package/vnxt" disabled="true" target="_blank">npm</a>-->
-                <a href="#docs">Docs</a>
+            <div class="feature">
+                <span class="emoji">📝</span>
+                <h3>Auto Changelog</h3>
+                <p>Generates and maintains CHANGELOG.md automatically</p>
+            </div>
+            <div class="feature">
+                <span class="emoji">🏷️</span>
+                <h3>Git Tag Annotation</h3>
+                <p>Creates annotated git tags with version details</p>
+            </div>
+            <div class="feature">
+                <span class="emoji">🔍</span>
+                <h3>Pre-flight Checks</h3>
+                <p>Verifies working directory before making changes</p>
+            </div>
+            <div class="feature">
+                <span class="emoji">🔬</span>
+                <h3>Dry Run Mode</h3>
+                <p>Preview changes without committing anything</p>
+            </div>
+            <div class="feature">
+                <span class="emoji">⚙️</span>
+                <h3>Configurable</h3>
+                <p>Project-level configuration via .vnxtrc.json</p>
             </div>
         </div>
-    </header>
+    </section>
 
-    <main class="container">
-        <section id="features">
-            <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Features</h2>
-            <div class="feature-grid">
-                <div class="feature">
-                    <span class="emoji">🚀</span>
-                    <h3>Automatic Semantic Versioning</h3>
-                    <p>Detects version bumps from conventional commit messages</p>
-                </div>
-                <div class="feature">
-                    <span class="emoji">📝</span>
-                    <h3>Auto Changelog</h3>
-                    <p>Generates and maintains CHANGELOG.md automatically</p>
-                </div>
-                <div class="feature">
-                    <span class="emoji">🏷️</span>
-                    <h3>Git Tag Annotation</h3>
-                    <p>Creates annotated git tags with version details</p>
-                </div>
-                <div class="feature">
-                    <span class="emoji">🔍</span>
-                    <h3>Pre-flight Checks</h3>
-                    <p>Verifies working directory before making changes</p>
-                </div>
-                <div class="feature">
-                    <span class="emoji">🔬</span>
-                    <h3>Dry Run Mode</h3>
-                    <p>Preview changes without committing anything</p>
-                </div>
-                <div class="feature">
-                    <span class="emoji">⚙️</span>
-                    <h3>Configurable</h3>
-                    <p>Project-level configuration via .vnxtrc.json</p>
-                </div>
-            </div>
-        </section>
+    <section id="installation">
+        <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Installation</h2>
 
-        <section id="quickstart">
-            <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Quick Start</h2>
-            
-            <div class="demo">
-                <div class="terminal-line">
-                    <span class="comment"># Simple version bump (auto-detects patch from "fix:")</span>
-                </div>
-                <div class="terminal-line">
-                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span class="string">"fix: resolve RFID reader bug"</span>
-                </div>
-                <div class="output">
-                    <div>📝 Auto-detected: patch version bump (fix)</div>
-                    <div>🔼 Bumping version...</div>
-                    <div>🚀 Pushing to remote...</div>
-                    <div>✅ Version bump complete!</div>
-                </div>
+        <div class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab(event, 'install-global')">Global</button>
+                <button class="tab-btn" onclick="switchTab(event, 'install-source')">From Source</button>
             </div>
 
-            <div class="demo">
-                <div class="terminal-line">
-                    <span class="comment"># Feature addition (auto-detects minor from "feat:")</span>
+            <div id="install-global" class="tab-content active">
+                <h3>Global Installation</h3>
+                <div class="demo">
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">npm</span> install -g vnxt
+                    </div>
                 </div>
-                <div class="terminal-line">
-                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span class="string">"feat: add heatmap visualization"</span>
+                <p>After installation, you can use either <code>vnxt</code> or the shorthand <code>vx</code></p>
+            </div>
+
+            <div id="install-source" class="tab-content">
+                <h3>Install from Source</h3>
+                <div class="demo">
+                    <div class="terminal-line">
+                        <span class="comment"># Clone the repository</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">git</span> clone
+                        https://github.com/n-orrow/vnxt.git
+                    </div>
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">cd</span> vnxt
+                    </div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line">
+                        <span class="comment"># Install globally via npm link</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">npm</span> link
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="quickstart">
+        <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Quick Start</h2>
+
+        <div class="demo">
+            <div class="terminal-line">
+                <span class="comment"># Simple version bump (auto-detects patch from "fix:")</span>
+            </div>
+            <div class="terminal-line">
+                <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                    class="string">"fix: resolve RFID reader bug"</span>
+            </div>
+            <div class="output">
+                <div>📝 Auto-detected: patch version bump (fix)</div>
+                <div>🔼 Bumping version...</div>
+                <div>🚀 Pushing to remote...</div>
+                <div>✅ Version bump complete!</div>
+            </div>
+        </div>
+
+        <div class="demo">
+            <div class="terminal-line">
+                <span class="comment"># Feature addition (auto-detects minor from "feat:")</span>
+            </div>
+            <div class="terminal-line">
+                <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                    class="string">"feat: add heatmap visualization"</span>
+            </div>
+        </div>
+
+        <div class="demo">
+            <div class="terminal-line">
+                <span class="comment"># Breaking change (auto-detects major from "BREAKING")</span>
+            </div>
+            <div class="terminal-line">
+                <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                    class="string">"BREAKING: redesign API structure"</span>
+            </div>
+        </div>
+    </section>
+
+    <section id="usage">
+        <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Usage</h2>
+
+        <div class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab(event, 'usage-options')">Options</button>
+                <button class="tab-btn" onclick="switchTab(event, 'usage-detection')">Auto-Detection</button>
+                <button class="tab-btn" onclick="switchTab(event, 'usage-advanced')">Advanced</button>
+            </div>
+
+            <div id="usage-options" class="tab-content active">
+                <h3>Command Line Options</h3>
+                <div class="options-table">
+                    <div class="option-row">
+                        <code>-m, --message &lt;msg&gt;</code>
+                        <span>Commit message (required, or use interactive mode)</span>
+                    </div>
+                    <div class="option-row">
+                        <code>-t, --type &lt;type&gt;</code>
+                        <span>Version type: patch, minor, major (auto-detected from message)</span>
+                    </div>
+                    <div class="option-row">
+                        <code>-v, --version &lt;ver&gt;</code>
+                        <span>Set specific version (e.g., 2.0.0-beta.1)</span>
+                    </div>
+                    <div class="option-row">
+                        <code>-p, --push</code>
+                        <span>Push to remote with tags</span>
+                    </div>
+                    <div class="option-row">
+                        <code>-dnp, --no-push</code>
+                        <span>Prevent auto-push (overrides config)</span>
+                    </div>
+                    <div class="option-row">
+                        <code>-c, --changelog</code>
+                        <span>Update CHANGELOG.md</span>
+                    </div>
+                    <div class="option-row">
+                        <code>-d, --dry-run</code>
+                        <span>Show what would happen without making changes</span>
+                    </div>
+                    <div class="option-row">
+                        <code>-a, --all [mode]</code>
+                        <span>Stage files before versioning (tracked, all, interactive, patch)</span>
+                    </div>
+                    <div class="option-row">
+                        <code>-r, --release</code>
+                        <span>Generate release notes file</span>
+                    </div>
+                    <div class="option-row">
+                        <code>-h, --help</code>
+                        <span>Show help message</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="demo">
-                <div class="terminal-line">
-                    <span class="comment"># With changelog and push (auto-enabled by default)</span>
+            <div id="usage-detection" class="tab-content">
+                <h3>Automatic Version Detection</h3>
+                <p>vnxt automatically detects the version bump type from your commit message:</p>
+                <div class="demo">
+                    <div class="terminal-line">
+                        <span class="string">"major:"</span> → major version bump
+                    </div>
+                    <div class="terminal-line">
+                        <span class="string">"minor:"</span> → minor version bump
+                    </div>
+                    <div class="terminal-line">
+                        <span class="string">"patch:"</span> → patch version bump
+                    </div>
+                    <div class="terminal-line">
+                        <span class="string">"feat:"</span> or <span class="string">"feature:"</span> → minor version
+                        bump
+                    </div>
+                    <div class="terminal-line">
+                        <span class="string">"fix:"</span> → patch version bump
+                    </div>
+                    <div class="terminal-line">
+                        <span class="string">"BREAKING"</span> → major version bump
+                    </div>
                 </div>
-                <div class="terminal-line">
-                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span class="string">"feat: add new dashboard"</span>
-                </div>
-            </div>
-        </section>
-
-        <section id="usage">
-            <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Usage</h2>
-            
-            <h3>Command Line Options</h3>
-            <div class="options-table">
-                <div class="option-row">
-                    <code>-m, --message &lt;msg&gt;</code>
-                    <span>Commit message (required, or use interactive mode)</span>
-                </div>
-                <div class="option-row">
-                    <code>-t, --type &lt;type&gt;</code>
-                    <span>Version type: patch, minor, major (auto-detected from message)</span>
-                </div>
-                <div class="option-row">
-                    <code>-v, --version &lt;ver&gt;</code>
-                    <span>Set specific version (e.g., 2.0.0-beta.1)</span>
-                </div>
-                <div class="option-row">
-                    <code>-p, --push</code>
-                    <span>Push to remote with tags</span>
-                </div>
-                <div class="option-row">
-                    <code>-dnp, --no-push</code>
-                    <span>Prevent auto-push (overrides config)</span>
-                </div>
-                <div class="option-row">
-                    <code>-c, --changelog</code>
-                    <span>Update CHANGELOG.md</span>
-                </div>
-                <div class="option-row">
-                    <code>-d, --dry-run</code>
-                    <span>Show what would happen without making changes</span>
-                </div>
-                <div class="option-row">
-                    <code>-a, --all [mode]</code>
-                    <span>Stage files before versioning (tracked, all, interactive, patch)</span>
-                </div>
-                <div class="option-row">
-                    <code>-r, --release</code>
-                    <span>Generate release notes file</span>
-                </div>
-                <div class="option-row">
-                    <code>-h, --help</code>
-                    <span>Show help message</span>
-                </div>
+                <p>You can override auto-detection with the <code>-t</code> flag.</p>
             </div>
 
-            <h3>Automatic Version Detection</h3>
-            <div class="demo">
-                <div class="terminal-line">
-                    <span class="string">"major:"</span> → major version bump
+            <div id="usage-advanced" class="tab-content">
+                <h3>Custom Versions</h3>
+                <p>Set specific version numbers for pre-releases:</p>
+                <div class="demo">
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-v</span>
+                        2.0.0-beta.1 <span class="flag">-m</span> <span
+                            class="string">"beta: initial release candidate"</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-v</span>
+                        1.5.0-rc.2 <span class="flag">-m</span> <span class="string">"release candidate 2"</span>
+                    </div>
                 </div>
-                <div class="terminal-line">
-                    <span class="string">"minor:"</span> → minor version bump
-                </div>
-                <div class="terminal-line">
-                    <span class="string">"patch:"</span> → patch version bump
-                </div>
-                <div class="terminal-line">
-                    <span class="string">"feat:"</span> or <span class="string">"feature:"</span> → minor version bump
-                </div>
-                <div class="terminal-line">
-                    <span class="string">"fix:"</span> → patch version bump
-                </div>
-                <div class="terminal-line">
-                    <span class="string">"BREAKING"</span> → major version bump
-                </div>
-            </div>
-        </section>
 
-        <section id="configuration">
-            <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Configuration</h2>
-            
-            <p>Create a <code>.vnxtrc.json</code> file in your project root:</p>
-            
-            <div class="demo">
+                <h3>Changelog Generation</h3>
+                <p>Automatically update CHANGELOG.md:</p>
+                <div class="demo">
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                            class="string">"feat: add user authentication"</span> <span class="flag">-c</span>
+                    </div>
+                </div>
+                <p>Creates/updates CHANGELOG.md:</p>
+                <div class="demo">
+                        <pre><code># Changelog
+
+## [1.2.0] - 2024-02-10
+- feat: add user authentication
+
+## [1.1.0] - 2024-02-09
+- feat: add dashboard</code></pre>
+                </div>
+
+                <h3>Release Notes</h3>
+                <p>Generate formatted release notes file:</p>
+                <div class="demo">
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                            class="string">"feat: major feature release"</span> <span class="flag">-r</span>
+                    </div>
+                </div>
+                <p>Creates <code>release-notes-v1.2.0.md</code></p>
+            </div>
+        </div>
+    </section>
+
+    <section id="configuration">
+        <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Configuration</h2>
+
+        <p>Create a <code>.vnxtrc.json</code> file in your project root:</p>
+
+        <div class="demo">
                 <pre><code>{
   "autoChangelog": true,
   "defaultType": "patch",
@@ -193,137 +301,286 @@
   "defaultStageMode": "tracked",
   "tagPrefix": "v"
 }</code></pre>
-            </div>
-
-            <h3>Configuration Options</h3>
-            <div class="config-table">
-                <div class="config-row">
-                    <div class="config-option">
-                        <code>autoChangelog</code>
-                        <span class="type">boolean</span>
-                        <span class="default">default: true</span>
-                    </div>
-                    <p>Automatically update CHANGELOG.md on every bump</p>
-                </div>
-                <div class="config-row">
-                    <div class="config-option">
-                        <code>defaultType</code>
-                        <span class="type">string</span>
-                        <span class="default">default: "patch"</span>
-                    </div>
-                    <p>Default version bump type if not auto-detected</p>
-                </div>
-                <div class="config-row">
-                    <div class="config-option">
-                        <code>requireCleanWorkingDir</code>
-                        <span class="type">boolean</span>
-                        <span class="default">default: false</span>
-                    </div>
-                    <p>Require clean git working directory before bumping</p>
-                </div>
-                <div class="config-row">
-                    <div class="config-option">
-                        <code>autoPush</code>
-                        <span class="type">boolean</span>
-                        <span class="default">default: true</span>
-                    </div>
-                    <p>Automatically push to remote after bumping</p>
-                </div>
-                <div class="config-row">
-                    <div class="config-option">
-                        <code>defaultStageMode</code>
-                        <span class="type">string</span>
-                        <span class="default">default: "tracked"</span>
-                    </div>
-                    <p>Default staging mode when using -a flag (tracked, all, interactive, patch)</p>
-                </div>
-                <div class="config-row">
-                    <div class="config-option">
-                        <code>tagPrefix</code>
-                        <span class="type">string</span>
-                        <span class="default">default: "v"</span>
-                    </div>
-                    <p>Prefix for git tags (e.g., "v1.2.3")</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="examples">
-            <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Workflow Examples</h2>
-            
-            <div class="example-group">
-                <h3>Quick Fix</h3>
-                <div class="demo">
-                    <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span class="string">"fix: resolve login bug"</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="example-group">
-                <h3>Feature Release</h3>
-                <div class="demo">
-                    <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span class="string">"feat: add dashboard analytics"</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="example-group">
-                <h3>Major Release</h3>
-                <div class="demo">
-                    <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span class="string">"BREAKING: new API structure"</span> <span class="flag">-r</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="example-group">
-                <h3>Dry Run (Preview Changes)</h3>
-                <div class="demo">
-                    <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span class="string">"feat: new feature"</span> <span class="flag">-d</span>
-                    </div>
-                    <div class="output">
-                        <div>🔬 DRY RUN MODE - No changes will be made</div>
-                        <div></div>
-                        <div>Would perform the following actions:</div>
-                        <div>  1. Bump minor version</div>
-                        <div>  2. Commit with message: "feat: new feature"</div>
-                        <div>  3. Create git tag with annotation</div>
-                        <div>  4. Update CHANGELOG.md</div>
-                        <div>  5. Push to remote with tags</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="example-group">
-                <h3>Interactive Mode</h3>
-                <div class="demo">
-                    <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span>
-                    </div>
-                    <div class="output">
-                        <div>🤔 Interactive mode</div>
-                        <div></div>
-                        <div>Commit message: <span class="cursor">▋</span></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>
-                Built by <a href="https://github.com/n-orrow" target="_blank">Nate Orrow</a>
-                | <a href="https://github.com/n-orrow/vnxt" target="_blank">GitHub</a> 
-                | <!--<a href="https://www.npmjs.com/package/vnxt" target="_blank">npm</a>-->
-                | MIT License
-            </p>
         </div>
-    </footer>
 
-    <script src="script.js"></script>
+        <h3>Configuration Options</h3>
+        <div class="config-table">
+            <div class="config-row">
+                <div class="config-option">
+                    <code>autoChangelog</code>
+                    <span class="type">boolean</span>
+                    <span class="default">default: true</span>
+                </div>
+                <p>Automatically update CHANGELOG.md on every bump</p>
+            </div>
+            <div class="config-row">
+                <div class="config-option">
+                    <code>defaultType</code>
+                    <span class="type">string</span>
+                    <span class="default">default: "patch"</span>
+                </div>
+                <p>Default version bump type if not auto-detected</p>
+            </div>
+            <div class="config-row">
+                <div class="config-option">
+                    <code>requireCleanWorkingDir</code>
+                    <span class="type">boolean</span>
+                    <span class="default">default: false</span>
+                </div>
+                <p>Require clean git working directory before bumping</p>
+            </div>
+            <div class="config-row">
+                <div class="config-option">
+                    <code>autoPush</code>
+                    <span class="type">boolean</span>
+                    <span class="default">default: true</span>
+                </div>
+                <p>Automatically push to remote after bumping</p>
+            </div>
+            <div class="config-row">
+                <div class="config-option">
+                    <code>defaultStageMode</code>
+                    <span class="type">string</span>
+                    <span class="default">default: "tracked"</span>
+                </div>
+                <p>Default staging mode when using -a flag (tracked, all, interactive, patch)</p>
+            </div>
+            <div class="config-row">
+                <div class="config-option">
+                    <code>tagPrefix</code>
+                    <span class="type">string</span>
+                    <span class="default">default: "v"</span>
+                </div>
+                <p>Prefix for git tags (e.g., "v1.2.3")</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="examples">
+        <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Workflow Examples</h2>
+
+        <div class="example-group">
+            <h3>Quick Fix</h3>
+            <div class="demo">
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        class="string">"fix: resolve login bug"</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-group">
+            <h3>Feature Release</h3>
+            <div class="demo">
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        class="string">"feat: add dashboard analytics"</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-group">
+            <h3>Major Release with Documentation</h3>
+            <div class="demo">
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        class="string">"BREAKING: new API structure"</span> <span class="flag">-r</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-group">
+            <h3>Dry Run (Preview Changes)</h3>
+            <div class="demo">
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        class="string">"feat: new feature"</span> <span class="flag">-d</span>
+                </div>
+                <div class="output">
+                    <div>🔬 DRY RUN MODE - No changes will be made</div>
+                    <div></div>
+                    <div>Would perform the following actions:</div>
+                    <div> 1. Bump minor version</div>
+                    <div> 2. Commit with message: "feat: new feature"</div>
+                    <div> 3. Create git tag with annotation</div>
+                    <div> 4. Update CHANGELOG.md</div>
+                    <div> 5. Push to remote with tags</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-group">
+            <h3>Interactive Mode</h3>
+            <div class="demo">
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">vx</span>
+                </div>
+                <div class="output">
+                    <div>🤔 Interactive mode</div>
+                    <div></div>
+                    <div>Commit message: <span class="cursor">▋</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-group">
+            <h3>Complete Workflow</h3>
+            <div class="demo">
+                <div class="terminal-line">
+                    <span class="comment"># Make changes to your code...</span>
+                </div>
+                <div class="terminal-line"></div>
+                <div class="terminal-line">
+                    <span class="comment"># Dry run to preview</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        class="string">"feat: add new API endpoint"</span> <span class="flag">-d</span>
+                </div>
+                <div class="terminal-line"></div>
+                <div class="terminal-line">
+                    <span class="comment"># Execute with changelog, release notes, and push</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        class="string">"feat: add new API endpoint"</span> <span class="flag">-c</span> <span
+                        class="flag">-r</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="preflight">
+        <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Pre-flight Checks</h2>
+
+        <p>vnxt performs several checks before making changes:</p>
+
+        <ul>
+            <li>✅ Verifies no uncommitted changes (unless using <code>-a</code>)</li>
+            <li>✅ Warns if not on main/master branch</li>
+            <li>✅ Checks for remote repository (if pushing)</li>
+        </ul>
+
+        <div class="demo">
+            <div class="terminal-line">
+                🔍 Running pre-flight checks...
+            </div>
+            <div class="terminal-line"></div>
+            <div class="terminal-line">
+                ⚠️ Warning: You're on branch 'feature/new-dashboard', not main/master
+            </div>
+            <div class="terminal-line">
+                ✅ Pre-flight checks passed
+            </div>
+        </div>
+    </section>
+
+    <section id="troubleshooting">
+        <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Troubleshooting</h2>
+
+        <div class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab(event, 'trouble-uncommitted')">Uncommitted Changes
+                </button>
+                <button class="tab-btn" onclick="switchTab(event, 'trouble-permissions')">Permissions</button>
+                <button class="tab-btn" onclick="switchTab(event, 'trouble-notfound')">Command Not Found</button>
+            </div>
+
+            <div id="trouble-uncommitted" class="tab-content active">
+                <h3>Uncommitted Changes Error</h3>
+                <p>Either commit your changes first, or use the <code>-a</code> flag to stage all changes:</p>
+                <div class="demo">
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                            class="string">"your message"</span> <span class="flag">-a</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="trouble-permissions" class="tab-content">
+                <h3>Permission Denied (Windows PowerShell)</h3>
+                <p>If you get execution policy errors:</p>
+                <div class="demo">
+                    <div class="terminal-line">
+                        <span class="prompt">PS></span> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope
+                        CurrentUser
+                    </div>
+                </div>
+            </div>
+
+            <div id="trouble-notfound" class="tab-content">
+                <h3>Command Not Found After Installation</h3>
+                <p>Make sure npm's global bin directory is in your PATH:</p>
+                <div class="demo">
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">npm</span> config get prefix
+                    </div>
+                    <div class="terminal-line">
+                        <span class="comment"># Add the bin subdirectory to your PATH</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="requirements">
+        <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Requirements</h2>
+
+        <ul>
+            <li>Node.js 12.x or higher</li>
+            <li>npm 6.x or higher</li>
+            <li>Git installed and configured</li>
+        </ul>
+    </section>
+
+    <section id="contributing">
+        <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Contributing</h2>
+
+        <p>Contributions are welcome! Please feel free to submit a Pull Request.</p>
+
+        <div class="demo">
+            <div class="terminal-line">
+                <span class="comment"># 1. Fork the repository</span>
+            </div>
+            <div class="terminal-line"></div>
+            <div class="terminal-line">
+                <span class="comment"># 2. Create your feature branch</span>
+            </div>
+            <div class="terminal-line">
+                <span class="prompt">$</span> <span class="command">git</span> checkout -b feature/amazing-feature
+            </div>
+            <div class="terminal-line"></div>
+            <div class="terminal-line">
+                <span class="comment"># 3. Commit your changes</span>
+            </div>
+            <div class="terminal-line">
+                <span class="prompt">$</span> <span class="command">git</span> commit -m <span class="string">'feat: add amazing feature'</span>
+            </div>
+            <div class="terminal-line"></div>
+            <div class="terminal-line">
+                <span class="comment"># 4. Push to the branch</span>
+            </div>
+            <div class="terminal-line">
+                <span class="prompt">$</span> <span class="command">git</span> push origin feature/amazing-feature
+            </div>
+            <div class="terminal-line"></div>
+            <div class="terminal-line">
+                <span class="comment"># 5. Open a Pull Request</span>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="container">
+        <p>
+            Built by <a href="https://github.com/n-orrow" target="_blank">Nate Orrow</a>
+            | <a href="https://github.com/n-orrow/vnxt" target="_blank">GitHub</a>
+            | MIT License
+        </p>
+    </div>
+</footer>
+
+<script src="script.js"></script>
 </body>
 </html>

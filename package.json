@@ -2,9 +2,10 @@
   "name": "vnxt",
   "version": "1.4.5",
   "description": "Version incrementation CLI tool with built in git commit, push and changelog generation",
+  "main": "vnxt.js",
   "bin": {
-    "vnxt": "vnxt.js",
-    "vx": "vnxt.js"
+    "vnxt": "./vnxt.js",
+    "vx": "./vnxt.js"
   },
   "scripts": {
     "test": "jest",
@@ -15,10 +16,30 @@
     "bump",
     "semver",
     "git",
-    "changelog"
+    "changelog",
+    "cli",
+    "release",
+    "npm"
   ],
   "author": "Nate Orrow | Nate@Orrow.uk",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/n-orrow/vnxt.git"
+  },
+  "bugs": {
+    "url": "https://github.com/n-orrow/vnxt/issues"
+  },
+  "homepage": "https://vnxt.dev",
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "files": [
+    "vnxt.js",
+    ".vnxtrc.json",
+    "README.md",
+    "LICENSE"
+  ],
   "devDependencies": {
     "jest": "^29.7.0"
   }

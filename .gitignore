@@ -1,5 +1,12 @@
-    /node_modules
-    /.idea
+    node_modules/
+    .idea/
+    .vscode/
+    *.log
+    .DS_Store
+    .vnxtrc.json
+    coverage/
+    .env
+    EOF
     /logos/caret-75x75.png
     /logos/vnxt.ai
     /logos/vnxt_caret.ai
