@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.6] - 2026-02-13
+- chore: added npm links back in to index.html
+
+
 ## [1.4.5] - 2026-02-13
 - chore: disabled links to npm as package not yet deployed
 
