@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.5] - 2026-02-13
+- chore: disabled links to npm as package not yet deployed
+
+
 ## [1.4.4] - 2026-02-13
 - fix: resolve broken link in /docs/index.html
 
