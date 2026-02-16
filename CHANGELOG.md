@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.1] - 2026-02-16
+- chore: test automated publishing
+
+
 ## [1.7.0] - 2026-02-16
 - feat: added version flag, ANSI color support, improved error messages and a quiet flag for CI/CD environments
 
