@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.5.0] - 2026-02-16
+- feat: add automated npm publishing workflow
+
+
 ## [1.4.6] - 2026-02-13
 - chore: added npm links back in to index.html
 
