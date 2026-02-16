@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.0] - 2026-02-16
+- feat: added version flag, ANSI color support, improved error messages and a quiet flag for CI/CD environments
+
+
 ## [1.6.0] - 2026-02-16
 - feat: add automated npm publishing workflow
 
