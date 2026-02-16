@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.2] - 2026-02-16
+- chore: changed publish.yml and npm trusted publisher settings to try and fix auto publishing
+
+
 ## [1.7.1] - 2026-02-16
 - chore: test automated publishing
 
