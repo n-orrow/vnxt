@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.6.0] - 2026-02-16
+- feat: add automated npm publishing workflow
+
+
 ## [1.5.0] - 2026-02-16
 - feat: add automated npm publishing workflow
 
