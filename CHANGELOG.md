@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.9.3] - 2026-02-17
+- fix: resolve --version flag conflict and command injection vulnerabilities
+
+
 ## [1.9.2] - 2026-02-17
 - patch: fixed broken like for CHANGELOG.md in release-notes/ files.
 

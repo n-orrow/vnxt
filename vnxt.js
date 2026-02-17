@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const {execSync} = require('child_process');
+const {execSync, execFileSync} = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
 
@@ -94,7 +94,7 @@ if (!fs.existsSync('.git')) {
 // Parse arguments
 let message = getFlag('--message', '-m');
 let type = getFlag('--type', '-t') || config.defaultType;
-let customVersion = getFlag('--version', '-v');
+let customVersion = getFlag('-v');
 let dryRun = hasFlag('--dry-run', '-d');
 let noPush = hasFlag('--no-push', '-dnp');
 let publishToNpm = hasFlag('--publish');
@@ -348,12 +348,12 @@ async function main() {
         }
 
         // Commit with user's message
-        execSync(`git commit -m "${message}"`, {stdio: quietMode ? 'pipe' : 'inherit'});
+        execFileSync('git', ['commit', '-m', message], {stdio: quietMode ? 'pipe' : 'inherit'});
 
         // Create annotated tag
         log('🏷️  Adding tag annotation...', 'cyan');
         const tagMessage = `Version ${newVersion}\n\n${message}`;
-        execSync(`git tag -a ${config.tagPrefix}${newVersion} -m "${tagMessage}"`, {stdio: 'pipe'});
+        execFileSync('git', ['tag', '-a', `${config.tagPrefix}${newVersion}`, '-m', tagMessage], {stdio: 'pipe'});
 
         // GENERATE CHANGELOG
         if (generateChangelog) {
@@ -491,7 +491,7 @@ Usage:
 Options:
   -m, --message <msg>      Commit message (required, or use interactive mode)
   -t, --type <type>        Version type: patch, minor, major (auto-detected from message)
-  -v, --version <ver>      Set specific version (e.g., 2.0.0-beta.1)
+  -v <ver>                 Set specific version (e.g., 2.0.0-beta.1)
   -V, --version            Show vnxt version
   -p, --push               Push to remote with tags
   -dnp, --no-push          Prevent auto-push (overrides config)
