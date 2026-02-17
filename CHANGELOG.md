@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.6] - 2026-02-17
+- fix: analytics not detected. Tweak and update.
+
+
 ## [1.7.5] - 2026-02-17
 - fix: .gitignore had indents so was ignoring bloody everything. Fixed and pushed
 
