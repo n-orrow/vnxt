@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.7] - 2026-02-17
+- fix: tag prefix was still hardcoded, rather than using the config
+
+
 ## [1.7.6] - 2026-02-17
 - fix: analytics not detected. Tweak and update.
 

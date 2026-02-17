@@ -9,7 +9,7 @@ const colors = {
     reset: '\x1b[0m',
     bright: '\x1b[1m',
     dim: '\x1b[2m',
-
+    
     // Foreground colors
     red: '\x1b[31m',
     green: '\x1b[32m',
@@ -336,7 +336,7 @@ async function main() {
         // Create annotated tag
         log('🏷️  Adding tag annotation...', 'cyan');
         const tagMessage = `Version ${newVersion}\n\n${message}`;
-        execSync(`git tag -a v${newVersion} -m "${tagMessage}"`, {stdio: 'pipe'});
+        execSync(`git tag -a ${config.tagPrefix}${newVersion} -m "${tagMessage}"`, {stdio: 'pipe'});
 
         // GENERATE CHANGELOG
         if (generateChangelog) {
@@ -364,7 +364,7 @@ async function main() {
         // GENERATE RELEASE NOTES
         if (generateReleaseNotes) {
             log('📋 Generating release notes...', 'cyan');
-            const releaseNotes = `# Release v${newVersion}
+            const releaseNotes = `# Release ${config.tagPrefix}${newVersion}
 
 Released: ${new Date().toISOString().split('T')[0]}
 
@@ -380,7 +380,7 @@ npm install ${packageJson.name}@${newVersion}
 See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 `;
 
-            const filename = `release-notes-v${newVersion}.md`;
+            const filename = `release-notes-${config.tagPrefix}${newVersion}.md`;
             fs.writeFileSync(filename, releaseNotes);
             log(`   Created: ${filename}`);
         }
@@ -397,7 +397,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 
         log(`\n📦 Version: ${oldVersion} → ${newVersion}`, 'green');
         log(`💬 Message: ${message}`);
-        log(`🏷️  Tag: v${newVersion}`);
+        log(`🏷️  Tag: ${config.tagPrefix}${newVersion}`);
         log(`🌿 Branch: ${branch}`);
 
         if (generateChangelog) {
