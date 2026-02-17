@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.3] - 2026-02-17
+- patch: included some analytics stuff in index.html header.
+
+
 ## [1.7.2] - 2026-02-16
 - chore: changed publish.yml and npm trusted publisher settings to try and fix auto publishing
 
