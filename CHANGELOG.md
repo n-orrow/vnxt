@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.8] - 2026-02-17
+- fix: updated publish.yml to fix npm auto-publishing
+
+
 ## [1.7.7] - 2026-02-17
 - fix: tag prefix was still hardcoded, rather than using the config
 
