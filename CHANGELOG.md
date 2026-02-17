@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.4] - 2026-02-17
+- chore: included some analytics stuff in index.html header.
+
+
 ## [1.7.3] - 2026-02-17
 - patch: included some analytics stuff in index.html header.
 

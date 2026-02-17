@@ -3,9 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>vnxt - Version management made simple</title>
-    <meta name="description"
-          content="A lightweight CLI tool for automated version bumping with changelog generation and git integration.">
+    <title>vnxt (vx) - Automated Version Bumping CLI Tool</title>
+
+    <!-- SEO -->
+    <meta name="description" content="vnxt (vx) is a lightweight CLI tool for automated semantic version bumping, changelog generation, and git integration. Zero dependencies.">
+    <meta name="keywords" content="version bump, semver, cli, npm, changelog, git, semantic versioning, release tool, version management, node">
+    <meta name="author" content="Nate Orrow">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://vnxt.dev">
+
+    <!-- Open Graph (social sharing) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vnxt.dev">
+    <meta property="og:title" content="vnxt (vx) - Automated Version Bumping CLI Tool">
+    <meta property="og:description" content="A lightweight CLI tool for automated semantic version bumping, changelog generation, and git integration. Zero dependencies.">
+    <meta property="og:image" content="https://vnxt.dev/logos/vnxt_light_logo.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:url" content="https://vnxt.dev">
+    <meta name="twitter:title" content="vnxt (vx) - Automated Version Bumping CLI Tool">
+    <meta name="twitter:description" content="A lightweight CLI tool for automated semantic version bumping, changelog generation, and git integration. Zero dependencies.">
+    <meta name="twitter:image" content="https://vnxt.dev/logos/vnxt_light_logo.png">
 
     <link rel="icon" type="image/png" href="logos/caret-38x38.png">
 
@@ -17,6 +36,15 @@
           rel="stylesheet">
 
     <link rel="stylesheet" href="style.css">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GXHN0XFJTV"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-GXHN0XFJTV');
+    </script>
 </head>
 <body>
 <header>
@@ -32,7 +60,7 @@
     <div class="quick-links">
         <a href="https://github.com/n-orrow/vnxt" target="_blank">GitHub</a>
         <a href="#installation">Install</a>
-        <a href="#docs">Docs</a>
+        <a href="https://www.npmjs.com/package/vnxt">npm</a>
     </div>
 </header>
 
@@ -69,6 +97,16 @@
                 <span class="emoji">⚙️</span>
                 <h3>Configurable</h3>
                 <p>Project-level configuration via .vnxtrc.json</p>
+            </div>
+            <div class="feature">
+                <span class="emoji">🎨</span>
+                <h3>Colored Output</h3>
+                <p>Beautiful terminal colors for better readability</p>
+            </div>
+            <div class="feature">
+                <span class="emoji">🤫</span>
+                <h3>Quiet Mode</h3>
+                <p>Minimal output perfect for CI/CD pipelines</p>
             </div>
         </div>
     </section>
@@ -183,6 +221,10 @@
                         <span>Set specific version (e.g., 2.0.0-beta.1)</span>
                     </div>
                     <div class="option-row">
+                        <code>-V, --version</code>
+                        <span>Show vnxt version</span>
+                    </div>
+                    <div class="option-row">
                         <code>-p, --push</code>
                         <span>Push to remote with tags</span>
                     </div>
@@ -205,6 +247,10 @@
                     <div class="option-row">
                         <code>-r, --release</code>
                         <span>Generate release notes file</span>
+                    </div>
+                    <div class="option-row">
+                        <code>-q, --quiet</code>
+                        <span>Minimal output (errors only)</span>
                     </div>
                     <div class="option-row">
                         <code>-h, --help</code>
@@ -299,7 +345,8 @@
   "requireCleanWorkingDir": false,
   "autoPush": true,
   "defaultStageMode": "tracked",
-  "tagPrefix": "v"
+  "tagPrefix": "v",
+  "colors": true
 }</code></pre>
         </div>
 
@@ -352,6 +399,14 @@
                     <span class="default">default: "v"</span>
                 </div>
                 <p>Prefix for git tags (e.g., "v1.2.3")</p>
+            </div>
+            <div class="config-row">
+                <div class="config-option">
+                    <code>colors</code>
+                    <span class="type">boolean</span>
+                    <span class="default">default: true</span>
+                </div>
+                <p>Enable colored terminal output (disable for logging systems)</p>
             </div>
         </div>
     </section>
@@ -448,6 +503,32 @@
                 </div>
             </div>
         </div>
+
+        <div class="example-group">
+            <h3>Quiet Mode (CI/CD)</h3>
+            <div class="demo">
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        class="string">"chore: automated update"</span> <span class="flag">-q</span>
+                </div>
+                <div class="terminal-line"></div>
+                <div class="terminal-line">
+                    <span class="comment"># Minimal output - only errors shown</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-group">
+            <h3>Check Version</h3>
+            <div class="demo">
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-V</span>
+                </div>
+                <div class="output">
+                    <div>vnxt v1.7.0</div>
+                </div>
+            </div>
+        </div>
     </section>
 
     <section id="preflight">
@@ -480,13 +561,29 @@
 
         <div class="tabs">
             <div class="tab-buttons">
-                <button class="tab-btn active" onclick="switchTab(event, 'trouble-uncommitted')">Uncommitted Changes
-                </button>
+                <button class="tab-btn active" onclick="switchTab(event, 'trouble-notgit')">Not a Git Repo</button>
+                <button class="tab-btn" onclick="switchTab(event, 'trouble-uncommitted')">Uncommitted Changes</button>
                 <button class="tab-btn" onclick="switchTab(event, 'trouble-permissions')">Permissions</button>
                 <button class="tab-btn" onclick="switchTab(event, 'trouble-notfound')">Command Not Found</button>
             </div>
 
-            <div id="trouble-uncommitted" class="tab-content active">
+            <div id="trouble-notgit" class="tab-content active">
+                <h3>Not a Git Repository</h3>
+                <p>If you see this error:</p>
+                <div class="demo">
+                    <div class="terminal-line">
+                        ❌ Not a git repository. Run `git init` first.
+                    </div>
+                </div>
+                <p>Initialize git in your project directory:</p>
+                <div class="demo">
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">git</span> init
+                    </div>
+                </div>
+            </div>
+
+            <div id="trouble-uncommitted" class="tab-content">
                 <h3>Uncommitted Changes Error</h3>
                 <p>Either commit your changes first, or use the <code>-a</code> flag to stage all changes:</p>
                 <div class="demo">
@@ -576,6 +673,7 @@
         <p>
             Built by <a href="https://github.com/n-orrow" target="_blank">Nate Orrow</a>
             | <a href="https://github.com/n-orrow/vnxt" target="_blank">GitHub</a>
+            | <a href="https://www.npmjs.com/package/vnxt">npm</a>
             | MIT License
         </p>
     </div>
