@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.8.0] - 2026-02-17
+- feat: add --publish flag to auto push to npm using updated publish.yml
+
+
 ## [1.7.8] - 2026-02-17
 - fix: updated publish.yml to fix npm auto-publishing
 

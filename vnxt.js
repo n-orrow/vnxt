@@ -9,7 +9,7 @@ const colors = {
     reset: '\x1b[0m',
     bright: '\x1b[1m',
     dim: '\x1b[2m',
-    
+
     // Foreground colors
     red: '\x1b[31m',
     green: '\x1b[32m',
@@ -98,6 +98,7 @@ let customVersion = getFlag('--version', '-v');
 let dryRun = hasFlag('--dry-run', '-d');
 let noPush = hasFlag('--no-push', '-dnp');
 let push = noPush ? false : (hasFlag('--push', '-p') || config.autoPush);
+let publishToNpm = hasFlag('--publish');
 let generateChangelog = hasFlag('--changelog', '-c') || config.autoChangelog;
 const addAllFlag = getFlag('--all', '-a');
 let addMode = null;
@@ -389,6 +390,14 @@ See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
         if (push) {
             log('🚀 Pushing to remote...', 'cyan');
             execSync('git push --follow-tags', {stdio: quietMode ? 'pipe' : 'inherit'});
+
+            // If --publish flag, also push a publish/v* tag to trigger npm workflow
+            if (publishToNpm) {
+                log('📦 Pushing publish tag to trigger npm release...', 'cyan');
+                const publishTag = `publish/${config.tagPrefix}${newVersion}`;
+                execSync(`git tag ${publishTag}`, {stdio: 'pipe'});
+                execSync(`git push origin ${publishTag}`, {stdio: quietMode ? 'pipe' : 'inherit'});
+            }
         }
 
         // STATS/SUMMARY
@@ -410,6 +419,9 @@ See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 
         if (push) {
             log(`🚀 Remote: Pushed with tags`, 'green');
+            if (publishToNpm) {
+                log(`📦 npm: Publishing triggered (publish/${config.tagPrefix}${newVersion})`, 'green');
+            }
         } else {
             log(`📍 Remote: Not pushed (use --push to enable)`, 'gray');
         }
@@ -446,6 +458,7 @@ Options:
   -V, --version            Show vnxt version
   -p, --push               Push to remote with tags
   -dnp, --no-push          Prevent auto-push (overrides config)
+  --publish                Push and trigger npm publish via GitHub Actions
   -c, --changelog          Update CHANGELOG.md
   -d, --dry-run            Show what would happen without making changes
   -a, --all [mode]         Stage files before versioning
@@ -488,6 +501,7 @@ Examples:
   vx -m "fix: bug" -a i                   # Interactive git add
   vx -m "fix: bug" -a p                   # Patch mode
   vx -m "fix: bug" -q                     # Quiet mode (minimal output)
+  vx -m "feat: new feature" --publish     # Bump, push and trigger npm publish
   vx                                      # Interactive mode
 `);
     process.exit(0);
