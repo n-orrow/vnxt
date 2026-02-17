@@ -406,7 +406,7 @@ npm install ${packageJson.name}@${newVersion}
 \`\`\`
 
 ## Full Changelog
-See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
+See [CHANGELOG.md](../CHANGELOG.md) for complete version history.
 `;
 
             const releaseNotesDir = 'release-notes';

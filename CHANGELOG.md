@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.9.2] - 2026-02-17
+- patch: fixed broken like for CHANGELOG.md in release-notes/ files.
+
+
 ## [1.9.1] - 2026-02-17
 - patch: created release-notes dir and updated vnxt.js to create release notes and push to git on publish
 
