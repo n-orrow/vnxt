@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.5] - 2026-02-17
+- fix: .gitignore had indents so was ignoring bloody everything. Fixed and pushed
+
+
 ## [1.7.4] - 2026-02-17
 - chore: included some analytics stuff in index.html header.
 

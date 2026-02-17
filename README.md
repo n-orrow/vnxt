@@ -16,6 +16,8 @@ A lightweight CLI tool for automated version bumping with changelog generation a
 - 📋 Release notes generation
 - ⚙️ Project-level configuration support
 - 💬 Interactive mode when no arguments provided
+- 🎨 Colored terminal output for better readability
+- 🤫 Quiet mode for CI/CD environments
 
 ## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Installation
 
@@ -87,12 +89,15 @@ All options work with both `vnxt` and `vx`:
 -m, --message <msg>      Commit message (required unless using interactive mode)
 -t, --type <type>        Version type: patch, minor, major (auto-detected from message)
 -v, --version <ver>      Set specific version (e.g., 2.0.0-beta.1)
+-V, --version            Show vnxt version
 -p, --push              Push to remote with tags
+-dnp, --no-push          Prevent auto-push (overrides config)
 -c, --changelog         Update CHANGELOG.md
 -d, --dry-run           Show what would happen without making changes
 -a, --all [mode]        Stage files before versioning (prompts if no mode)
                         Modes: tracked, all, interactive (i), patch (p)
 -r, --release           Generate release notes file
+-q, --quiet             Minimal output (errors only)
 -h, --help              Show help message
 ```
 
@@ -207,6 +212,39 @@ vx -m "fix: typo" -a p           # Patch mode (git add -p)
 
 **Note:** If you run `vx` without any files staged and without the `-a` flag, vnxt will prompt you interactively to choose a staging mode.
 
+### Quiet Mode
+
+Minimize terminal output for CI/CD environments:
+
+**Bash/PowerShell:**
+```bash
+vx -m "feat: new feature" -q
+```
+
+In quiet mode:
+- ✅ Errors still display
+- ❌ Progress messages hidden
+- ❌ Summary stats hidden
+- ❌ Git diff output hidden
+
+Perfect for automated workflows where you only want to see failures.
+
+### Check Version
+
+Display the installed vnxt version:
+
+**Bash/PowerShell:**
+```bash
+vx -V
+# or
+vnxt --version
+```
+
+Output:
+```
+vnxt v1.7.0
+```
+
 ### Complete Workflow Example
 
 **Bash/PowerShell:**
@@ -228,8 +266,11 @@ Create a `.vnxtrc.json` file in your project root to set defaults:
 {
   "autoChangelog": true,
   "defaultType": "patch",
-  "requireCleanWorkingDir": true,
-  "autoPush": false
+  "requireCleanWorkingDir": false,
+  "autoPush": true,
+  "defaultStageMode": "tracked",
+  "tagPrefix": "v",
+  "colors": true
 }
 ```
 
@@ -237,10 +278,13 @@ Create a `.vnxtrc.json` file in your project root to set defaults:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `autoChangelog` | boolean | `false` | Automatically update CHANGELOG.md on every bump |
+| `autoChangelog` | boolean | `true` | Automatically update CHANGELOG.md on every bump |
 | `defaultType` | string | `"patch"` | Default version bump type if not auto-detected |
-| `requireCleanWorkingDir` | boolean | `true` | Require clean git working directory before bumping |
-| `autoPush` | boolean | `false` | Automatically push to remote after bumping |
+| `requireCleanWorkingDir` | boolean | `false` | Require clean git working directory before bumping |
+| `autoPush` | boolean | `true` | Automatically push to remote after bumping |
+| `defaultStageMode` | string | `"tracked"` | Default staging mode when using `-a` flag |
+| `tagPrefix` | string | `"v"` | Prefix for git tags (e.g., "v1.2.3") |
+| `colors` | boolean | `true` | Enable colored terminal output |
 
 ## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Pre-flight Checks
 
@@ -310,7 +354,36 @@ vx -m "BREAKING: new API structure" -c -r -p
 vx -m "chore: refactor code" -a
 ```
 
+### CI/CD Pipeline
+
+**Bash/PowerShell:**
+```bash
+# Quiet mode - only shows errors
+vx -m "chore: automated update" -q
+```
+
+### Check Installed Version
+
+**Bash/PowerShell:**
+```bash
+vx -V
+```
+
 ## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Troubleshooting
+
+### Not a Git Repository
+
+If you see this error:
+```
+❌ Not a git repository. Run `git init` first.
+```
+
+You're trying to use vnxt in a directory that isn't a git repository. Initialize git first:
+
+**Bash/PowerShell:**
+```bash
+git init
+```
 
 ### Permission Denied (Windows PowerShell)
 

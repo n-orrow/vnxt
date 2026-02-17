@@ -4,5 +4,6 @@
   "requireCleanWorkingDir": false,
   "autoPush": true,
   "defaultStageMode": "tracked",
-  "tagPrefix": "v"
+  "tagPrefix": "v",
+  "colors": true
 }

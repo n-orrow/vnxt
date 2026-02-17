@@ -1,15 +1,14 @@
-    node_modules/
-    .idea/
-    .vscode/
-    *.log
-    .DS_Store
-    .vnxtrc.json
-    coverage/
-    .env
-    EOF
-    /logos/caret-75x75.png
-    /logos/vnxt.ai
-    /logos/vnxt_caret.ai
-    /logos/vnxt_caret.png
-    /logos/vnxt_dark.ai
-    /logos/vnxt_light.ai
+node_modules/
+.idea/
+.vscode/
+*.log
+.DS_Store
+.vnxtrc.json
+coverage/
+.env
+/logos/caret-75x75.png
+/logos/vnxt.ai
+/logos/vnxt_caret.ai
+/logos/vnxt_caret.png
+/logos/vnxt_dark.ai
+/logos/vnxt_light.ai

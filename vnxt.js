@@ -4,6 +4,45 @@ const {execSync} = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
 
+// ANSI color codes for terminal output
+const colors = {
+    reset: '\x1b[0m',
+    bright: '\x1b[1m',
+    dim: '\x1b[2m',
+
+    // Foreground colors
+    red: '\x1b[31m',
+    green: '\x1b[32m',
+    yellow: '\x1b[33m',
+    blue: '\x1b[34m',
+    cyan: '\x1b[36m',
+    white: '\x1b[37m',
+    gray: '\x1b[90m'
+};
+
+// Quiet mode flag
+let quietMode = false;
+
+// Helper to log with colors (respects quiet mode and colors config)
+function log(message, color = '') {
+    if (quietMode) return;
+    if (color && colors[color] && config.colors) {
+        console.log(`${colors[color]}${message}${colors.reset}`);
+    } else {
+        console.log(message);
+    }
+}
+
+function logError(message) {
+    // Errors always show, even in quiet mode
+    // Colors can be disabled for errors too
+    if (config.colors) {
+        console.error(`${colors.red}${message}${colors.reset}`);
+    } else {
+        console.error(message);
+    }
+}
+
 // Parse command line arguments
 const args = process.argv.slice(2);
 
@@ -25,12 +64,31 @@ let config = {
     requireCleanWorkingDir: false,
     autoPush: true,
     defaultStageMode: 'tracked',
-    tagPrefix: 'v'
+    tagPrefix: 'v',
+    colors: true
 };
 
 if (fs.existsSync('.vnxtrc.json')) {
     const userConfig = JSON.parse(fs.readFileSync('.vnxtrc.json', 'utf8'));
     config = {...config, ...userConfig};
+}
+
+// Check for --version flag
+if (args.includes('--version') || args.includes('-V')) {
+    const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+    console.log(`vnxt v${pkg.version}`);
+    process.exit(0);
+}
+
+// Check for --quiet flag
+if (args.includes('--quiet') || args.includes('-q')) {
+    quietMode = true;
+}
+
+// Check if in a git repository
+if (!fs.existsSync('.git')) {
+    logError('❌ Not a git repository. Run `git init` first.');
+    process.exit(1);
 }
 
 // Parse arguments
@@ -42,10 +100,9 @@ let noPush = hasFlag('--no-push', '-dnp');
 let push = noPush ? false : (hasFlag('--push', '-p') || config.autoPush);
 let generateChangelog = hasFlag('--changelog', '-c') || config.autoChangelog;
 const addAllFlag = getFlag('--all', '-a');
-let addMode = null; // Will be set to: 'tracked', 'all', 'interactive', 'patch', or null
-let promptForStaging = false; // If true, prompt user for staging mode
+let addMode = null;
+let promptForStaging = false;
 if (addAllFlag) {
-    // If -a has a value, use it as the mode
     if (typeof addAllFlag === 'string') {
         const mode = addAllFlag.toLowerCase();
         if (['tracked', 'all', 'a', 'interactive', 'i', 'patch', 'p'].includes(mode)) {
@@ -54,11 +111,10 @@ if (addAllFlag) {
             else if (mode === 'p') addMode = 'patch';
             else addMode = mode;
         } else {
-            console.error(`Error: Invalid add mode '${addAllFlag}'. Use: tracked, all, interactive (i), or patch (p)`);
+            logError(`Error: Invalid add mode '${addAllFlag}'. Use: tracked, all, interactive (i), or patch (p)`);
             process.exit(1);
         }
     } else {
-        // If -a has no value, we'll prompt the user later
         promptForStaging = true;
     }
 }
@@ -83,11 +139,11 @@ async function main() {
     try {
         // Interactive mode if no message provided
         if (!message) {
-            console.log('🤔 Interactive mode\n');
+            log('🤔 Interactive mode\n', 'cyan');
 
             message = await prompt('Commit message: ');
             if (!message) {
-                console.error('Error: Commit message is required');
+                logError('Error: Commit message is required');
                 process.exit(1);
             }
 
@@ -108,55 +164,54 @@ async function main() {
             const dryRunInput = await prompt('Dry run (preview only)? (y/n) [n]: ');
             dryRun = dryRunInput.toLowerCase() === 'y' || dryRunInput.toLowerCase() === 'yes';
 
-            console.log(''); // Blank line before proceeding
+            log(''); // Blank line before proceeding
         }
 
         // Auto-detect version type from conventional commit format
         if (!customVersion && !getFlag('--type', '-t')) {
             if (message.startsWith('major:') || message.startsWith('MAJOR:')) {
                 type = 'major';
-                console.log('📝 Auto-detected: major version bump');
+                log('📝 Auto-detected: major version bump', 'cyan');
             } else if (message.startsWith('minor:') || message.startsWith('MINOR:')) {
                 type = 'minor';
-                console.log('📝 Auto-detected: minor version bump');
+                log('📝 Auto-detected: minor version bump', 'cyan');
             } else if (message.startsWith('patch:') || message.startsWith('PATCH:')) {
                 type = 'patch';
-                console.log('📝 Auto-detected: patch version bump');
+                log('📝 Auto-detected: patch version bump', 'cyan');
             } else if (message.startsWith('feat:') || message.startsWith('feature:')) {
                 type = 'minor';
-                console.log('📝 Auto-detected: minor version bump (feature)');
+                log('📝 Auto-detected: minor version bump (feature)', 'cyan');
             } else if (message.startsWith('fix:')) {
                 type = 'patch';
-                console.log('📝 Auto-detected: patch version bump (fix)');
+                log('📝 Auto-detected: patch version bump (fix)', 'cyan');
             } else if (message.includes('BREAKING') || message.startsWith('breaking:')) {
                 type = 'major';
-                console.log('📝 Auto-detected: major version bump (breaking change)');
+                log('📝 Auto-detected: major version bump (breaking change)', 'cyan');
             }
         }
 
         // Validate version type
         if (!customVersion && !['patch', 'minor', 'major'].includes(type)) {
-            console.error('Error: Version type must be patch, minor, or major');
+            logError('Error: Version type must be patch, minor, or major');
             process.exit(1);
         }
 
         // PRE-FLIGHT CHECKS
-        console.log('\n🔍 Running pre-flight checks...\n');
+        log('\n🔍 Running pre-flight checks...\n', 'cyan');
 
         // Check for uncommitted changes OR if user requested staging prompt
         if ((config.requireCleanWorkingDir && !addMode) || promptForStaging) {
             const status = execSync('git status --porcelain --untracked-files=no').toString().trim();
             if (status || promptForStaging) {
-                // No files staged and changes exist - offer interactive selection
                 if (status) {
-                    console.log('⚠️  You have uncommitted changes.\n');
+                    log('⚠️  You have uncommitted changes.\n', 'yellow');
                 }
-                console.log('📁 How would you like to stage files?\n');
-                console.log('  1. Tracked files only (git add -u)');
-                console.log('  2. All changes (git add -A)');
-                console.log('  3. Interactive selection (git add -i)');
-                console.log('  4. Patch mode (git add -p)');
-                console.log('  5. Skip staging (continue without staging)\n');
+                log('📁 How would you like to stage files?\n');
+                log('  1. Tracked files only (git add -u)');
+                log('  2. All changes (git add -A)');
+                log('  3. Interactive selection (git add -i)');
+                log('  4. Patch mode (git add -p)');
+                log('  5. Skip staging (continue without staging)\n');
 
                 const choice = await prompt('Select [1-5]: ');
 
@@ -169,19 +224,19 @@ async function main() {
                 } else if (choice === '4') {
                     addMode = 'patch';
                 } else if (choice === '5') {
-                    console.log('⚠️  Skipping file staging. Ensure files are staged manually.');
+                    log('⚠️  Skipping file staging. Ensure files are staged manually.', 'yellow');
                 } else {
-                    console.error('Invalid choice. Exiting.');
+                    logError('Invalid choice. Exiting.');
                     process.exit(1);
                 }
-                console.log('');
+                log('');
             }
         }
 
         // Check current branch
         const branch = execSync('git branch --show-current').toString().trim();
         if (branch !== 'main' && branch !== 'master') {
-            console.log(`⚠️  Warning: You're on branch '${branch}', not main/master`);
+            log(`⚠️  Warning: You're on branch '${branch}', not main/master`, 'yellow');
         }
 
         // Check if remote exists
@@ -189,18 +244,18 @@ async function main() {
             execSync('git remote get-url origin', {stdio: 'pipe'});
         } catch {
             if (push) {
-                console.error('❌ Error: No remote repository configured, cannot push');
+                logError('❌ Error: No remote repository configured, cannot push');
                 process.exit(1);
             }
-            console.log('⚠️  Warning: No remote repository configured');
+            log('⚠️  Warning: No remote repository configured', 'yellow');
         }
 
-        console.log('✅ Pre-flight checks passed\n');
+        log('✅ Pre-flight checks passed\n', 'green');
 
         // DRY RUN MODE
         if (dryRun) {
-            console.log('🔬 DRY RUN MODE - No changes will be made\n');
-            console.log('Would perform the following actions:');
+            log('🔬 DRY RUN MODE - No changes will be made\n', 'yellow');
+            log('Would perform the following actions:');
 
             if (addMode) {
                 const modeDescriptions = {
@@ -209,56 +264,51 @@ async function main() {
                     'interactive': 'Interactive selection (git add -i)',
                     'patch': 'Patch mode (git add -p)'
                 };
-                console.log(`  1. ${modeDescriptions[addMode]}`);
+                log(`  1. ${modeDescriptions[addMode]}`);
             }
 
-            if (customVersion) {
-                console.log(`  2. Set version to: ${customVersion}`);
-            } else {
-                console.log(`  2. Bump ${type} version`);
-            }
-
-            console.log(`  3. Commit with message: "${message}"`);
-            console.log(`  4. Create git tag with annotation`);
+            log(`  2. Bump ${type} version`);
+            log(`  3. Commit with message: "${message}"`);
+            log('  4. Create git tag with annotation');
 
             if (generateChangelog) {
-                console.log('  5. Update CHANGELOG.md');
+                log('  5. Update CHANGELOG.md');
+            } else {
+                log('  5. (Skipping changelog - use --changelog to enable)');
             }
 
             if (generateReleaseNotes) {
-                console.log('  6. Generate release notes file');
+                log('  6. Generate release notes file');
+            } else {
+                log('  6. (Skipping release notes - use --release to enable)');
             }
 
             if (push) {
-                console.log('  7. Push to remote with tags');
+                log('  7. Push to remote with tags');
             } else {
-                console.log('  7. (Skipping push - use --push to enable)');
+                log('  7. (Skipping push - use --push to enable)');
             }
 
-            console.log('\n✓ Dry run complete. Use without -d to apply changes.');
+            log('\n✓ Dry run complete. Use without -d to apply changes.', 'green');
             process.exit(0);
         }
 
         // STAGE FILES if requested
         if (addMode) {
-            console.log('📦 Staging files...');
+            log('📦 Staging files...', 'cyan');
 
             if (addMode === 'tracked') {
-                // Only stage tracked files that have been modified/deleted
                 execSync('git add -u', {stdio: 'inherit'});
             } else if (addMode === 'all') {
-                // Stage all changes (respects .gitignore for new files)
                 execSync('git add -A', {stdio: 'inherit'});
             } else if (addMode === 'interactive') {
-                // Interactive staging
                 execSync('git add -i', {stdio: 'inherit'});
             } else if (addMode === 'patch') {
-                // Patch mode staging
                 execSync('git add -p', {stdio: 'inherit'});
             }
         }
         // BUMP VERSION
-        console.log(`\n🔼 Bumping version...`);
+        log(`\n🔼 Bumping version...`, 'cyan');
 
         // Get current version before bump
         const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
@@ -266,9 +316,9 @@ async function main() {
 
         // Always disable npm's git integration and handle it ourselves
         if (customVersion) {
-            execSync(`npm version ${customVersion} --git-tag-version=false`, {stdio: 'inherit'});
+            execSync(`npm version ${customVersion} --git-tag-version=false`, {stdio: quietMode ? 'pipe' : 'inherit'});
         } else {
-            execSync(`npm version ${type} --git-tag-version=false`, {stdio: 'inherit'});
+            execSync(`npm version ${type} --git-tag-version=false`, {stdio: quietMode ? 'pipe' : 'inherit'});
         }
 
         // Get new version
@@ -281,19 +331,16 @@ async function main() {
         }
 
         // Commit with user's message
-        execSync(`git commit -m "${message}"`, {stdio: 'inherit'});
+        execSync(`git commit -m "${message}"`, {stdio: quietMode ? 'pipe' : 'inherit'});
 
         // Create annotated tag
-        execSync(`git tag -a v${newVersion} -m "Version ${newVersion}\n\n${message}"`, {stdio: 'pipe'});
-
-        // ADD GIT TAG ANNOTATION (keeping console.log for UX)
-        console.log('🏷️  Adding tag annotation...');
+        log('🏷️  Adding tag annotation...', 'cyan');
         const tagMessage = `Version ${newVersion}\n\n${message}`;
-        execSync(`git tag -a v${newVersion} -f -m "${tagMessage}"`, {stdio: 'pipe'});
+        execSync(`git tag -a v${newVersion} -m "${tagMessage}"`, {stdio: 'pipe'});
 
         // GENERATE CHANGELOG
         if (generateChangelog) {
-            console.log('📄 Updating CHANGELOG.md...');
+            log('📄 Updating CHANGELOG.md...', 'cyan');
             const date = new Date().toISOString().split('T')[0];
             const changelogEntry = `\n## [${newVersion}] - ${date}\n- ${message}\n`;
 
@@ -316,7 +363,7 @@ async function main() {
 
         // GENERATE RELEASE NOTES
         if (generateReleaseNotes) {
-            console.log('📋 Generating release notes...');
+            log('📋 Generating release notes...', 'cyan');
             const releaseNotes = `# Release v${newVersion}
 
 Released: ${new Date().toISOString().split('T')[0]}
@@ -335,48 +382,50 @@ See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 
             const filename = `release-notes-v${newVersion}.md`;
             fs.writeFileSync(filename, releaseNotes);
-            console.log(`   Created: ${filename}`);
+            log(`   Created: ${filename}`);
         }
 
         // PUSH TO REMOTE
         if (push) {
-            console.log('🚀 Pushing to remote...');
-            execSync('git push --follow-tags', {stdio: 'inherit'});
+            log('🚀 Pushing to remote...', 'cyan');
+            execSync('git push --follow-tags', {stdio: quietMode ? 'pipe' : 'inherit'});
         }
 
         // STATS/SUMMARY
-        console.log('\n📊 Summary:');
-        console.log('━'.repeat(50));
+        log('\n📊 Summary:', 'cyan');
+        log('━'.repeat(50), 'gray');
 
-        console.log(`\n📦 Version: ${oldVersion} → ${newVersion}`);
-        console.log(`💬 Message: ${message}`);
-        console.log(`🏷️  Tag: v${newVersion}`);
-        console.log(`🌿 Branch: ${branch}`);
+        log(`\n📦 Version: ${oldVersion} → ${newVersion}`, 'green');
+        log(`💬 Message: ${message}`);
+        log(`🏷️  Tag: v${newVersion}`);
+        log(`🌿 Branch: ${branch}`);
 
         if (generateChangelog) {
-            console.log(`📄 Changelog: Updated`);
+            log(`📄 Changelog: Updated`);
         }
 
         if (generateReleaseNotes) {
-            console.log(`📋 Release notes: Generated`);
+            log(`📋 Release notes: Generated`);
         }
 
         if (push) {
-            console.log(`🚀 Remote: Pushed with tags`);
+            log(`🚀 Remote: Pushed with tags`, 'green');
         } else {
-            console.log(`📍 Remote: Not pushed (use --push to enable)`);
+            log(`📍 Remote: Not pushed (use --push to enable)`, 'gray');
         }
 
         // Show files changed
-        console.log('\n📝 Files changed:');
-        const diff = execSync('git diff HEAD~1 --stat').toString();
-        console.log(diff);
+        if (!quietMode) {
+            log('\n📝 Files changed:');
+            const diff = execSync('git diff HEAD~1 --stat').toString();
+            console.log(diff);
+        }
 
-        console.log('━'.repeat(50));
-        console.log('\n✅ Version bump complete!\n');
+        log('━'.repeat(50), 'gray');
+        log('\n✅ Version bump complete!\n', 'green');
 
     } catch (error) {
-        console.error('\n❌ Error:', error.message);
+        logError('\n❌ Error: ' + error.message);
         process.exit(1);
     }
 }
@@ -394,6 +443,7 @@ Options:
   -m, --message <msg>      Commit message (required, or use interactive mode)
   -t, --type <type>        Version type: patch, minor, major (auto-detected from message)
   -v, --version <ver>      Set specific version (e.g., 2.0.0-beta.1)
+  -V, --version            Show vnxt version
   -p, --push               Push to remote with tags
   -dnp, --no-push          Prevent auto-push (overrides config)
   -c, --changelog          Update CHANGELOG.md
@@ -402,6 +452,7 @@ Options:
                            Modes: tracked (default), all, interactive (i), patch (p)
                            If no mode specified, prompts interactively
   -r, --release            Generate release notes file
+  -q, --quiet              Minimal output (errors only)
   -h, --help               Show this help message
 
 Auto-detection:
@@ -420,10 +471,12 @@ Configuration:
     "requireCleanWorkingDir": false,
     "autoPush": true,
     "defaultStageMode": "tracked",
-    "tagPrefix": "v"
+    "tagPrefix": "v",
+    "colors": true
   }
 
 Examples:
+  vx -V                                   # Show version
   vx -m "fix: resolve bug"                # Auto-pushes with autoPush: true
   vx -m "feat: add new feature"           # Auto-pushes with autoPush: true
   vx -m "fix: bug" -dnp                   # Don't push (override)
@@ -434,6 +487,7 @@ Examples:
   vx -m "fix: bug" -a all                 # Stage all changes
   vx -m "fix: bug" -a i                   # Interactive git add
   vx -m "fix: bug" -a p                   # Patch mode
+  vx -m "fix: bug" -q                     # Quiet mode (minimal output)
   vx                                      # Interactive mode
 `);
     process.exit(0);

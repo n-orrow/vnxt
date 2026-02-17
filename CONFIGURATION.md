@@ -55,6 +55,18 @@ vnxt can be configured using a `.vnxtrc.json` file in your project root.
   ```json
   "tagPrefix": "v"
   ```
+  
+### `colors` (boolean)
+- **Default:** `true`
+- **Description:** Enable or disable colored terminal output
+- **Example:** 
+  ```json
+  "colors": true
+  ```
+  Note: Disabling colors is useful for:
+- Logging systems that don't support ANSI colors
+- CI/CD environments with color issues
+- Personal preference
 
 ## Example Configuration Files
 
@@ -82,7 +94,8 @@ vnxt can be configured using a `.vnxtrc.json` file in your project root.
   "requireCleanWorkingDir": false,
   "autoPush": true,
   "defaultStageMode": "tracked",
-  "tagPrefix": "v"
+  "tagPrefix": "v",
+  "colors": true
 }
 ```
 
