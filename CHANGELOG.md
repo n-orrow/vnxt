@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.9.1] - 2026-02-17
+- patch: created release-notes dir and updated vnxt.js to create release notes and push to git on publish
+
+
 ## [1.9.0] - 2026-02-17
 - feat: auto-generate release notes on --publish with context prompt, timestamp and author
 

@@ -409,9 +409,18 @@ npm install ${packageJson.name}@${newVersion}
 See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 `;
 
-            const filename = `release-notes-${config.tagPrefix}${newVersion}.md`;
+            const releaseNotesDir = 'release-notes';
+            if (!fs.existsSync(releaseNotesDir)) {
+                fs.mkdirSync(releaseNotesDir);
+            }
+
+            const filename = `${releaseNotesDir}/${config.tagPrefix}${newVersion}.md`;
             fs.writeFileSync(filename, releaseNotes);
             log(`   Created: ${filename}`);
+
+            // Stage and amend commit to include release notes
+            execSync(`git add ${filename}`, {stdio: 'pipe'});
+            execSync(`git commit --amend --no-edit`, {stdio: 'pipe'});
         }
 
         // PUSH TO REMOTE
