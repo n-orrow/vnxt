@@ -97,8 +97,8 @@ let type = getFlag('--type', '-t') || config.defaultType;
 let customVersion = getFlag('--version', '-v');
 let dryRun = hasFlag('--dry-run', '-d');
 let noPush = hasFlag('--no-push', '-dnp');
-let push = noPush ? false : (hasFlag('--push', '-p') || config.autoPush);
 let publishToNpm = hasFlag('--publish');
+let push = noPush ? false : (hasFlag('--push', '-p') || publishToNpm || config.autoPush);
 let generateChangelog = hasFlag('--changelog', '-c') || config.autoChangelog;
 const addAllFlag = getFlag('--all', '-a');
 let addMode = null;
@@ -195,6 +195,22 @@ async function main() {
         if (!customVersion && !['patch', 'minor', 'major'].includes(type)) {
             logError('Error: Version type must be patch, minor, or major');
             process.exit(1);
+        }
+
+        // AUTO-REQUIRE RELEASE NOTES for --publish
+        let releaseNotesContext = '';
+        const requireReleaseNotes = !generateReleaseNotes && publishToNpm;
+        if (requireReleaseNotes) {
+            generateReleaseNotes = true;
+            if (!quietMode) {
+                log(`\n📋 Release notes required for --publish.`, 'yellow');
+                releaseNotesContext = await prompt('   Add context (press Enter to skip): ');
+                if (releaseNotesContext) log('');
+            }
+        } else if (generateReleaseNotes && !quietMode) {
+            // -r flag was passed explicitly - still offer context prompt
+            releaseNotesContext = await prompt('\n📋 Add context to release notes (press Enter to skip): ');
+            if (releaseNotesContext) log('');
         }
 
         // PRE-FLIGHT CHECKS
@@ -365,12 +381,24 @@ async function main() {
         // GENERATE RELEASE NOTES
         if (generateReleaseNotes) {
             log('📋 Generating release notes...', 'cyan');
+
+            const date = new Date();
+            const timestamp = date.toISOString().replace('T', ' ').split('.')[0] + ' UTC';
+            const dateShort = date.toISOString().split('T')[0];
+
+            let author = '';
+            try {
+                author = execSync('git config user.name', {stdio: 'pipe'}).toString().trim();
+            } catch {
+                author = '';
+            }
+
             const releaseNotes = `# Release ${config.tagPrefix}${newVersion}
 
-Released: ${new Date().toISOString().split('T')[0]}
+Released: ${dateShort} at ${timestamp.split(' ')[1]}${author ? `\nAuthor: ${author}` : ''}
 
 ## Changes
-${message}
+${message}${releaseNotesContext ? `\n\n## Release Notes\n${releaseNotesContext}` : ''}
 
 ## Installation
 \`\`\`bash
