@@ -10,7 +10,7 @@ A lightweight CLI tool for automated version bumping with changelog generation a
 
 - 🚀 Automatic semantic version detection from commit messages
 - 📝 Automatic CHANGELOG.md generation
-- 🏷️ Git tag annotation
+- 🏷️ Git tag annotation with configurable prefix
 - 🔍 Pre-flight checks for clean working directory
 - 🔬 Dry-run mode to preview changes
 - 📋 Release notes generation
@@ -18,6 +18,7 @@ A lightweight CLI tool for automated version bumping with changelog generation a
 - 💬 Interactive mode when no arguments provided
 - 🎨 Colored terminal output for better readability
 - 🤫 Quiet mode for CI/CD environments
+- 📦 Automated npm publishing via GitHub Actions Trusted Publishing
 
 ## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Installation
 
@@ -92,6 +93,7 @@ All options work with both `vnxt` and `vx`:
 -V, --version            Show vnxt version
 -p, --push              Push to remote with tags
 -dnp, --no-push          Prevent auto-push (overrides config)
+--publish               Push and trigger npm publish via GitHub Actions
 -c, --changelog         Update CHANGELOG.md
 -d, --dry-run           Show what would happen without making changes
 -a, --all [mode]        Stage files before versioning (prompts if no mode)
@@ -242,8 +244,47 @@ vnxt --version
 
 Output:
 ```
-vnxt v1.7.0
+vnxt v1.8.0
 ```
+
+### npm Publish
+
+Trigger an automated npm publish via GitHub Actions using Trusted Publishing (OIDC):
+
+**Bash/PowerShell:**
+```bash
+vx -m "feat: new feature" --publish
+```
+
+This will:
+1. Bump the version and commit
+2. Push with a standard `v*` tag
+3. Push an additional `publish/v*` tag
+4. GitHub Actions detects the `publish/v*` tag and publishes to npm automatically
+
+This means you can batch up multiple changes without publishing to npm each time:
+```bash
+vx -m "feat: add something"         # bump only
+vx -m "fix: fix something"          # bump only
+vx -m "feat: final thing" --publish # bump + publish everything
+```
+
+**Note:** `--publish` implies `--push`, so `-p` is not required.
+
+### Custom Tag Prefix
+
+Control the prefix used for git tags via `.vnxtrc.json`:
+
+```json
+{
+  "tagPrefix": "v"
+}
+```
+
+**Options:**
+- `"v"` → `v1.8.0` (default)
+- `""` → `1.8.0` (no prefix)
+- `"release-"` → `release-1.8.0` (useful in monorepos)
 
 ### Complete Workflow Example
 
@@ -360,6 +401,16 @@ vx -m "chore: refactor code" -a
 ```bash
 # Quiet mode - only shows errors
 vx -m "chore: automated update" -q
+```
+
+### Publish to npm
+
+**Bash/PowerShell:**
+```bash
+# Batch changes then publish when ready
+vx -m "feat: add feature one"
+vx -m "fix: fix something"
+vx -m "feat: final feature" --publish
 ```
 
 ### Check Installed Version

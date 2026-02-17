@@ -1,6 +1,6 @@
 {
   "name": "vnxt",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Version incrementation CLI tool with built in git commit, push and changelog generation",
   "main": "vnxt.js",
   "bin": {

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.8.1] - 2026-02-17
+- patch: updated docs and readme to include fixed tagPrevix and --publish updates
+
+
 ## [1.8.0] - 2026-02-17
 - feat: add --publish flag to auto push to npm using updated publish.yml
 

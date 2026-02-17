@@ -36,19 +36,16 @@
           rel="stylesheet">
 
     <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
-<!-- Google tag (gtag.js) -->
+<!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GXHN0XFJTV"></script>
 <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-
     gtag('config', 'G-GXHN0XFJTV');
 </script>
-
 <header>
     <div class="header-logo">
         <img src="logos/vnxt_light_logo.png" alt="vnxt" class="logo">
@@ -82,8 +79,8 @@
             </div>
             <div class="feature">
                 <span class="emoji">🏷️</span>
-                <h3>Git Tag Annotation</h3>
-                <p>Creates annotated git tags with version details</p>
+                <h3>Configurable Tag Prefix</h3>
+                <p>Customise git tag format via .vnxtrc.json</p>
             </div>
             <div class="feature">
                 <span class="emoji">🔍</span>
@@ -109,6 +106,11 @@
                 <span class="emoji">🤫</span>
                 <h3>Quiet Mode</h3>
                 <p>Minimal output perfect for CI/CD pipelines</p>
+            </div>
+            <div class="feature">
+                <span class="emoji">📦</span>
+                <h3>Automated npm Publishing</h3>
+                <p>Trigger npm releases via GitHub Actions Trusted Publishing</p>
             </div>
         </div>
     </section>
@@ -233,6 +235,10 @@
                     <div class="option-row">
                         <code>-dnp, --no-push</code>
                         <span>Prevent auto-push (overrides config)</span>
+                    </div>
+                    <div class="option-row">
+                        <code>--publish</code>
+                        <span>Push and trigger npm publish via GitHub Actions (implies --push)</span>
                     </div>
                     <div class="option-row">
                         <code>-c, --changelog</code>
@@ -400,7 +406,7 @@
                     <span class="type">string</span>
                     <span class="default">default: "v"</span>
                 </div>
-                <p>Prefix for git tags (e.g., "v1.2.3")</p>
+                <p>Prefix for git tags. Use "v" for v1.2.3, "" for 1.2.3, or "release-" for release-1.2.3</p>
             </div>
             <div class="config-row">
                 <div class="config-option">
@@ -521,13 +527,42 @@
         </div>
 
         <div class="example-group">
+            <h3>Publish to npm</h3>
+            <div class="demo">
+                <div class="terminal-line">
+                    <span class="comment"># Batch changes without publishing...</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        class="string">"feat: add feature one"</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        class="string">"fix: fix something"</span>
+                </div>
+                <div class="terminal-line"></div>
+                <div class="terminal-line">
+                    <span class="comment"># Ready to release - triggers npm publish</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        class="string">"feat: final feature"</span> <span class="flag">--publish</span>
+                </div>
+                <div class="output">
+                    <div>🚀 Remote: Pushed with tags</div>
+                    <div>📦 npm: Publishing triggered (publish/v1.8.0)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-group">
             <h3>Check Version</h3>
             <div class="demo">
                 <div class="terminal-line">
                     <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-V</span>
                 </div>
                 <div class="output">
-                    <div>vnxt v1.7.0</div>
+                    <div>vnxt v1.8.0</div>
                 </div>
             </div>
         </div>
