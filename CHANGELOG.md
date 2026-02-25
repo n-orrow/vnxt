@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.9.4] - 2026-02-25
+- patch: Fixed interactive mode nonsense, updated conflicting version switches, release notes path issues, git diff HEAD crash fix and fixed some testing shenanigans
+
+
 ## [1.9.3] - 2026-02-17
 - fix: resolve --version flag conflict and command injection vulnerabilities
 

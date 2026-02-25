@@ -7,7 +7,7 @@ vnxt can be configured using a `.vnxtrc.json` file in your project root.
 ### `autoChangelog` (boolean)
 - **Default:** `true`
 - **Description:** Automatically update CHANGELOG.md with each version bump
-- **Example:** 
+- **Example:**
   ```json
   "autoChangelog": true
   ```
@@ -16,7 +16,7 @@ vnxt can be configured using a `.vnxtrc.json` file in your project root.
 - **Default:** `"patch"`
 - **Options:** `"patch"`, `"minor"`, `"major"`
 - **Description:** Default version bump type when not auto-detected or specified
-- **Example:** 
+- **Example:**
   ```json
   "defaultType": "patch"
   ```
@@ -25,7 +25,7 @@ vnxt can be configured using a `.vnxtrc.json` file in your project root.
 - **Default:** `false`
 - **Description:** Require a clean git working directory before bumping
 - **Note:** Set to `false` to use the `-a` staging feature
-- **Example:** 
+- **Example:**
   ```json
   "requireCleanWorkingDir": false
   ```
@@ -34,7 +34,7 @@ vnxt can be configured using a `.vnxtrc.json` file in your project root.
 - **Default:** `true`
 - **Description:** Automatically push to remote after successful version bump
 - **Note:** Can be overridden with `--no-push` / `-dnp` flag
-- **Example:** 
+- **Example:**
   ```json
   "autoPush": true
   ```
@@ -43,23 +43,27 @@ vnxt can be configured using a `.vnxtrc.json` file in your project root.
 - **Default:** `"tracked"`
 - **Options:** `"tracked"`, `"all"`, `"interactive"`, `"patch"`
 - **Description:** Default staging mode when using `-a` flag without argument
-- **Example:** 
+- **Example:**
   ```json
   "defaultStageMode": "tracked"
   ```
 
 ### `tagPrefix` (string)
 - **Default:** `"v"`
-- **Description:** Prefix for git tags (e.g., "v1.2.3")
-- **Example:** 
+- **Description:** Prefix applied consistently across all git tags, release note filenames, and npm publish tags
+- **Affects:**
+    - Git version tags (e.g., `v1.2.3`)
+    - npm publish trigger tags (e.g., `publish/v1.2.3`)
+    - Release note filenames (e.g., `release-notes/v1.2.3.md`)
+- **Example:**
   ```json
   "tagPrefix": "v"
   ```
-  
+
 ### `colors` (boolean)
 - **Default:** `true`
 - **Description:** Enable or disable colored terminal output
-- **Example:** 
+- **Example:**
   ```json
   "colors": true
   ```
@@ -67,6 +71,33 @@ vnxt can be configured using a `.vnxtrc.json` file in your project root.
 - Logging systems that don't support ANSI colors
 - CI/CD environments with color issues
 - Personal preference
+
+## CLI-Only Flags (Not in .vnxtrc.json)
+
+Some flags are not configurable via `.vnxtrc.json` and are always passed on the command line.
+
+### `--publish`
+Bumps the version, pushes to remote, and creates a `publish/vX.Y.Z` git tag to trigger an npm publish workflow via GitHub Actions. This flag implies `--push` — you don't need to pass both.
+
+It also automatically generates release notes (stored in `release-notes/`) and prompts you for optional context to include.
+
+```bash
+vx -m "feat: new feature" --publish
+```
+
+### `-r` / `--release`
+Generates a release notes file in `release-notes/` without triggering an npm publish. The filename uses your `tagPrefix` setting (e.g., `release-notes/v1.2.3.md`). You'll be prompted for optional context to include in the notes.
+
+```bash
+vx -m "fix: bug" -r
+```
+
+### Version Inspection Flags
+These flags exit immediately after printing and don't perform any versioning:
+
+- `-vv` / `--vnxt-version` — Show the installed vnxt version
+- `-gv` / `--get-version` — Show the current project's name and version
+- `-sv` / `--set-version <ver>` — Set a specific version (e.g., `2.0.0-beta.1`)
 
 ## Example Configuration Files
 
@@ -115,6 +146,8 @@ Command-line flags always override configuration:
 - `--no-push` / `-dnp`: Prevent push (overrides `autoPush: true`)
 - `--changelog` / `-c`: Force changelog update (overrides `autoChangelog: false`)
 - `--type` / `-t`: Override `defaultType`
+- `--publish`: Force push + trigger npm publish (implies `--push`)
+- `-sv` / `--set-version <ver>`: Set an exact version instead of bumping
 
 ## Usage Examples
 
