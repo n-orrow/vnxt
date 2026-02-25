@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.9.5] - 2026-02-25
+- chore: forgot to publish last time.
+
+
 ## [1.9.4] - 2026-02-25
 - patch: Fixed interactive mode nonsense, updated conflicting version switches, release notes path issues, git diff HEAD crash fix and fixed some testing shenanigans
 
