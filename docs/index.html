@@ -52,7 +52,7 @@
     </div>
 
     <div class="install-command">
-        <span class="prompt">$</span> npm install -g vnxt
+        <span class="prompt"></span> npm install -g vnxt
         <button class="copy-btn" onclick="copyToClipboard('npm install -g vnxt')">Copy</button>
     </div>
 
@@ -146,7 +146,7 @@
                     <h3>Global Installation</h3>
                     <div class="demo">
                         <div class="terminal-line">
-                            <span class="prompt">$</span> <span class="command">npm</span> install -g vnxt
+                            <span class="prompt"></span> <span class="command">npm</span> install -g vnxt
                         </div>
                     </div>
                     <p>After installation, you can use either <code>vnxt</code> or the shorthand <code>vx</code></p>
@@ -159,18 +159,18 @@
                             <span class="comment"># Clone the repository</span>
                         </div>
                         <div class="terminal-line">
-                            <span class="prompt">$</span> <span class="command">git</span> clone
+                            <span class="prompt"></span> <span class="command">git</span> clone
                             https://github.com/n-orrow/vnxt.git
                         </div>
                         <div class="terminal-line">
-                            <span class="prompt">$</span> <span class="command">cd</span> vnxt
+                            <span class="prompt"></span> <span class="command">cd</span> vnxt
                         </div>
                         <div class="terminal-line"></div>
                         <div class="terminal-line">
                             <span class="comment"># Install globally via npm link</span>
                         </div>
                         <div class="terminal-line">
-                            <span class="prompt">$</span> <span class="command">npm</span> link
+                            <span class="prompt"></span> <span class="command">npm</span> link
                         </div>
                     </div>
                 </div>
@@ -185,7 +185,7 @@
                     <span class="comment"># Simple version bump (auto-detects patch from "fix:")</span>
                 </div>
                 <div class="terminal-line">
-                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                    <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                         class="string">"fix: resolve RFID reader bug"</span>
                 </div>
                 <div class="output">
@@ -201,7 +201,7 @@
                     <span class="comment"># Feature addition (auto-detects minor from "feat:")</span>
                 </div>
                 <div class="terminal-line">
-                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                    <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                         class="string">"feat: add heatmap visualization"</span>
                 </div>
             </div>
@@ -211,7 +211,7 @@
                     <span class="comment"># Breaking change (auto-detects major from "BREAKING")</span>
                 </div>
                 <div class="terminal-line">
-                    <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                    <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                         class="string">"BREAKING: redesign API structure"</span>
                 </div>
             </div>
@@ -317,12 +317,12 @@
                     <p>Set specific version numbers for pre-releases:</p>
                     <div class="demo">
                         <div class="terminal-line">
-                            <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-v</span>
+                            <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-v</span>
                             2.0.0-beta.1 <span class="flag">-m</span> <span
                                 class="string">"beta: initial release candidate"</span>
                         </div>
                         <div class="terminal-line">
-                            <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-v</span>
+                            <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-v</span>
                             1.5.0-rc.2 <span class="flag">-m</span> <span class="string">"release candidate 2"</span>
                         </div>
                     </div>
@@ -331,7 +331,7 @@
                     <p>Automatically update CHANGELOG.md:</p>
                     <div class="demo">
                         <div class="terminal-line">
-                            <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                            <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                                 class="string">"feat: add user authentication"</span> <span class="flag">-c</span>
                         </div>
                     </div>
@@ -350,7 +350,7 @@
                     <p>Generate formatted release notes file:</p>
                     <div class="demo">
                         <div class="terminal-line">
-                            <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                            <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                                 class="string">"feat: major feature release"</span> <span class="flag">-r</span>
                         </div>
                     </div>
@@ -444,7 +444,7 @@
                 <h3>Quick Fix</h3>
                 <div class="demo">
                     <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                             class="string">"fix: resolve login bug"</span>
                     </div>
                 </div>
@@ -454,7 +454,7 @@
                 <h3>Feature Release</h3>
                 <div class="demo">
                     <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                             class="string">"feat: add dashboard analytics"</span>
                     </div>
                 </div>
@@ -464,7 +464,7 @@
                 <h3>Major Release with Documentation</h3>
                 <div class="demo">
                     <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                             class="string">"BREAKING: new API structure"</span> <span class="flag">-r</span>
                     </div>
                 </div>
@@ -474,7 +474,7 @@
                 <h3>Dry Run (Preview Changes)</h3>
                 <div class="demo">
                     <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                             class="string">"feat: new feature"</span> <span class="flag">-d</span>
                     </div>
                     <div class="output">
@@ -494,7 +494,7 @@
                 <h3>Interactive Mode</h3>
                 <div class="demo">
                     <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span>
+                        <span class="prompt"></span> <span class="command">vx</span>
                     </div>
                     <div class="output">
                         <div>🤔 Interactive mode</div>
@@ -515,7 +515,7 @@
                         <span class="comment"># Dry run to preview</span>
                     </div>
                     <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                             class="string">"feat: add new API endpoint"</span> <span class="flag">-d</span>
                     </div>
                     <div class="terminal-line"></div>
@@ -523,7 +523,7 @@
                         <span class="comment"># Execute with changelog, release notes, and push</span>
                     </div>
                     <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                             class="string">"feat: add new API endpoint"</span> <span class="flag">-c</span> <span
                             class="flag">-r</span>
                     </div>
@@ -534,7 +534,7 @@
                 <h3>Quiet Mode (CI/CD)</h3>
                 <div class="demo">
                     <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                             class="string">"chore: automated update"</span> <span class="flag">-q</span>
                     </div>
                     <div class="terminal-line"></div>
@@ -551,11 +551,11 @@
                         <span class="comment"># Batch changes without publishing...</span>
                     </div>
                     <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                             class="string">"feat: add feature one"</span>
                     </div>
                     <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                             class="string">"fix: fix something"</span>
                     </div>
                     <div class="terminal-line"></div>
@@ -563,7 +563,7 @@
                         <span class="comment"># Ready to release - triggers npm publish</span>
                     </div>
                     <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                        <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                             class="string">"feat: final feature"</span> <span class="flag">--publish</span>
                     </div>
                     <div class="output">
@@ -577,7 +577,7 @@
                 <h3>Check Version</h3>
                 <div class="demo">
                     <div class="terminal-line">
-                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-V</span>
+                        <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-V</span>
                     </div>
                     <div class="output">
                         <div>vnxt v1.8.0</div>
@@ -633,7 +633,7 @@
                     <p>Initialize git in your project directory:</p>
                     <div class="demo">
                         <div class="terminal-line">
-                            <span class="prompt">$</span> <span class="command">git</span> init
+                            <span class="prompt"></span> <span class="command">git</span> init
                         </div>
                     </div>
                 </div>
@@ -643,7 +643,7 @@
                     <p>Either commit your changes first, or use the <code>-a</code> flag to stage all changes:</p>
                     <div class="demo">
                         <div class="terminal-line">
-                            <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-m</span> <span
+                            <span class="prompt"></span> <span class="command">vx</span> <span class="flag">-m</span> <span
                                 class="string">"your message"</span> <span class="flag">-a</span>
                         </div>
                     </div>
@@ -665,7 +665,7 @@
                     <p>Make sure npm's global bin directory is in your PATH:</p>
                     <div class="demo">
                         <div class="terminal-line">
-                            <span class="prompt">$</span> <span class="command">npm</span> config get prefix
+                            <span class="prompt"></span> <span class="command">npm</span> config get prefix
                         </div>
                         <div class="terminal-line">
                             <span class="comment"># Add the bin subdirectory to your PATH</span>
@@ -699,21 +699,21 @@
                     <span class="comment"># 2. Create your feature branch</span>
                 </div>
                 <div class="terminal-line">
-                    <span class="prompt">$</span> <span class="command">git</span> checkout -b feature/amazing-feature
+                    <span class="prompt"></span> <span class="command">git</span> checkout -b feature/amazing-feature
                 </div>
                 <div class="terminal-line"></div>
                 <div class="terminal-line">
                     <span class="comment"># 3. Commit your changes</span>
                 </div>
                 <div class="terminal-line">
-                    <span class="prompt">$</span> <span class="command">git</span> commit -m <span class="string">'feat: add amazing feature'</span>
+                    <span class="prompt"></span> <span class="command">git</span> commit -m <span class="string">'feat: add amazing feature'</span>
                 </div>
                 <div class="terminal-line"></div>
                 <div class="terminal-line">
                     <span class="comment"># 4. Push to the branch</span>
                 </div>
                 <div class="terminal-line">
-                    <span class="prompt">$</span> <span class="command">git</span> push origin feature/amazing-feature
+                    <span class="prompt"></span> <span class="command">git</span> push origin feature/amazing-feature
                 </div>
                 <div class="terminal-line"></div>
                 <div class="terminal-line">
