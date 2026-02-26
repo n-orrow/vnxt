@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.13.0] - 2026-02-26
+- feat: added all commit messages since last publish to release notes, instead of just the current commit message
+
+
 ## [1.12.0] - 2026-02-26
 - feat: added all commit messages since last publish to release notes, instead of just the current commit message
 
