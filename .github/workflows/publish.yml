@@ -34,6 +34,25 @@ jobs:
           git commit -m "chore: bump vnxt to $VERSION"
           git push
 
+  homebrew:
+    runs-on: ubuntu-latest
+    needs: publish
+    steps:
+      - name: Update Homebrew tap
+        env:
+          PAT: ${{ secrets.HOMEBREW_TAP_PAT }}
+        run: |
+          VERSION=${GITHUB_REF_NAME#publish/v}
+          git clone https://x-access-token:${PAT}@github.com/n-orrow/homebrew-vnxt.git
+          cd homebrew-vnxt
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          sed -i "s/version \".*\"/version \"$VERSION\"/" Formula/vnxt.rb
+          sed -i "s/vnxt-.*\.tgz/vnxt-$VERSION.tgz/" Formula/vnxt.rb
+          git add Formula/vnxt.rb
+          git commit -m "chore: bump vnxt to $VERSION"
+          git push
+
   chocolatey:
     runs-on: windows-latest
     needs: publish

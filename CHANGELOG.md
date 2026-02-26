@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.11.2] - 2026-02-26
+- chore: added homebrew personal tap. Updated publish, readme and docs.
+
+
 ## [1.11.1] - 2026-02-26
 - chore: updated readme and docs
 
