@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.9.8] - 2026-02-26
+- fix: pesky double $ signs
+
+
 ## [1.9.7] - 2026-02-26
 - chore: updating docs to reflect yesterdays version publish
 
