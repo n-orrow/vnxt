@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.9.7] - 2026-02-26
+- chore: updating docs to reflect yesterdays version publish
+
+
 ## [1.9.6] - 2026-02-25
 - fix: updated typo in docs where there was a phantom '$' floating around in way too many spots.
 

@@ -89,18 +89,19 @@ All options work with both `vnxt` and `vx`:
 ```
 -m, --message <msg>      Commit message (required unless using interactive mode)
 -t, --type <type>        Version type: patch, minor, major (auto-detected from message)
--v, --version <ver>      Set specific version (e.g., 2.0.0-beta.1)
--V, --version            Show vnxt version
--p, --push              Push to remote with tags
+-sv, --set-version <v>   Set a specific version (e.g., 2.0.0-beta.1)
+-vv, --vnxt-version      Show the installed vnxt version
+-gv, --get-version       Show the current project's version
+-p, --push               Push to remote with tags
 -dnp, --no-push          Prevent auto-push (overrides config)
---publish               Push and trigger npm publish via GitHub Actions
--c, --changelog         Update CHANGELOG.md
--d, --dry-run           Show what would happen without making changes
--a, --all [mode]        Stage files before versioning (prompts if no mode)
-                        Modes: tracked, all, interactive (i), patch (p)
--r, --release           Generate release notes file
--q, --quiet             Minimal output (errors only)
--h, --help              Show help message
+--publish                Push and trigger npm publish via GitHub Actions (implies --push)
+-c, --changelog          Update CHANGELOG.md
+-d, --dry-run            Show what would happen without making changes
+-a, --all [mode]         Stage files before versioning (prompts if no mode)
+                         Modes: tracked, all, interactive (i), patch (p)
+-r, --release            Generate release notes file (saved to release-notes/)
+-q, --quiet              Minimal output (errors only)
+-h, --help               Show help message
 ```
 
 ### Automatic Version Detection
@@ -112,7 +113,7 @@ vnxt automatically detects the version bump type from your commit message:
 - `patch:` → **patch** version bump
 - `feat:` or `feature:` → **minor** version bump
 - `fix:` → **patch** version bump
-- `BREAKING:` or contains `BREAKING` → **major** version bump
+- `BREAKING` (anywhere in message) or `breaking:` → **major** version bump
 
 You can override this with the `-t` flag.
 
@@ -144,8 +145,8 @@ Set a specific version number (useful for pre-releases):
 
 **Bash/PowerShell:**
 ```bash
-vx -v 2.0.0-beta.1 -m "beta: initial release candidate"
-vx -v 1.5.0-rc.2 -m "release candidate 2"
+vx -sv 2.0.0-beta.1 -m "beta: initial release candidate"
+vx -sv 1.5.0-rc.2 -m "release candidate 2"
 ```
 
 ### Changelog Generation
@@ -177,18 +178,24 @@ Generate a formatted release notes file:
 vx -m "feat: major feature release" -r
 ```
 
-Creates `release-notes-v1.2.0.md`:
+You'll be prompted to add optional context before the file is created. Release notes are saved to `release-notes/v1.2.0.md` (respects your `tagPrefix` config):
 ```markdown
 # Release v1.2.0
 
-Released: 2024-02-10
+Released: 2024-02-10 at 14:32:00 UTC
+Author: Your Name
 
 ## Changes
 feat: major feature release
 
 ## Installation
 npm install your-package@1.2.0
+
+## Full Changelog
+See CHANGELOG.md for complete version history.
 ```
+
+**Note:** `--publish` automatically generates release notes too, so `-r` is only needed for standalone bumps where you want the file without publishing.
 
 ### File Staging Options
 
@@ -237,14 +244,28 @@ Display the installed vnxt version:
 
 **Bash/PowerShell:**
 ```bash
-vx -V
+vx -vv
 # or
-vnxt --version
+vnxt --vnxt-version
 ```
 
 Output:
 ```
-vnxt v1.8.0
+vnxt v1.9.3
+```
+
+Display the current project's version:
+
+**Bash/PowerShell:**
+```bash
+vx -gv
+# or
+vnxt --get-version
+```
+
+Output:
+```
+my-package v2.4.1
 ```
 
 ### npm Publish
@@ -257,10 +278,12 @@ vx -m "feat: new feature" --publish
 ```
 
 This will:
-1. Bump the version and commit
-2. Push with a standard `v*` tag
-3. Push an additional `publish/v*` tag
-4. GitHub Actions detects the `publish/v*` tag and publishes to npm automatically
+1. Prompt for optional release notes context
+2. Bump the version and commit
+3. Auto-generate a release notes file in `release-notes/`
+4. Push with a standard `v*` tag
+5. Push an additional `publish/v*` tag
+6. GitHub Actions detects the `publish/v*` tag and publishes to npm automatically
 
 This means you can batch up multiple changes without publishing to npm each time:
 ```bash
@@ -417,7 +440,7 @@ vx -m "feat: final feature" --publish
 
 **Bash/PowerShell:**
 ```bash
-vx -V
+vx -vv
 ```
 
 ## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Troubleshooting
