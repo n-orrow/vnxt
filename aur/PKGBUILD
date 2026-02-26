@@ -1,0 +1,18 @@
+# Maintainer: Nate Orrow <your@email.com>
+pkgname=vnxt
+pkgver=1.14.0
+pkgrel=1
+pkgdesc="Automated semantic version bumping CLI tool with changelog generation and git integration"
+arch=('any')
+url="https://vnxt.dev"
+license=('MIT')
+depends=('nodejs' 'npm')
+source=("https://registry.npmjs.org/vnxt/-/vnxt-${pkgver}.tgz")
+sha256sums=('SKIP')
+
+package() {
+    npm install -g \
+        --prefix "${pkgdir}/usr" \
+        --ignore-scripts \
+        "${srcdir}/package"
+}

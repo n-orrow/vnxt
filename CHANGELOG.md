@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.15.0] - 2026-02-26
+- minor: added AUR package manager support
+
+
 ## [1.14.1] - 2026-02-26
 - fix: ugly <a> styling. Fixed it.
 
