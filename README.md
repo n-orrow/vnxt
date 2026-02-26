@@ -22,40 +22,47 @@ A lightweight CLI tool for automated version bumping with changelog generation a
 
 ## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Installation
 
-### Global Installation
+### npm (all platforms)
 
-**Bash/PowerShell:**
 ```bash
 npm install -g vnxt
 ```
 
-After installation, you can use either `vnxt` or the shorter alias `vx`:
-```bash
-vnxt --help
-vx --help  # Same thing, shorter!
+### Scoop (Windows)
+
+```powershell
+scoop bucket add vnxt https://github.com/n-orrow/scoop-vnxt
+scoop install vnxt
 ```
 
-### Local Installation (from source)
+### Chocolatey (Windows)
+
+> ⏳ Pending moderation — will be available on the Chocolatey community repository shortly.
+
+```powershell
+choco install vnxt
+```
+
+### From Source
 
 **Bash/macOS/Linux:**
 ```bash
-# Clone the repository
 git clone https://github.com/n-orrow/vnxt.git
 cd vnxt
-
-# Install globally via npm link
 chmod +x vnxt.js
 npm link
 ```
 
 **PowerShell/Windows:**
 ```powershell
-# Clone the repository
 git clone https://github.com/n-orrow/vnxt.git
 cd vnxt
-
-# Install globally via npm link
 npm link
+```
+
+After installation, you can use either `vnxt` or the shorter alias `vx`:
+```bash
+vx --help
 ```
 
 ## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Usage

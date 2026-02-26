@@ -138,12 +138,14 @@
 
             <div class="tabs">
                 <div class="tab-buttons">
-                    <button class="tab-btn active" onclick="switchTab(this, 'install-global')">Global</button>
+                    <button class="tab-btn active" onclick="switchTab(this, 'install-npm')">npm</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'install-scoop')">Scoop</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'install-choco')">Chocolatey</button>
                     <button class="tab-btn" onclick="switchTab(this, 'install-source')">From Source</button>
                 </div>
 
-                <div id="install-global" class="tab-content active">
-                    <h3>Global Installation</h3>
+                <div id="install-npm" class="tab-content active">
+                    <h3>npm (all platforms)</h3>
                     <div class="demo">
                         <div class="terminal-line">
                             <span class="prompt">$</span> <span class="command">npm</span> install -g vnxt
@@ -152,22 +154,39 @@
                     <p>After installation, you can use either <code>vnxt</code> or the shorthand <code>vx</code></p>
                 </div>
 
+                <div id="install-scoop" class="tab-content">
+                    <h3>Scoop (Windows)</h3>
+                    <div class="demo">
+                        <div class="terminal-line">
+                            <span class="prompt">$</span> <span class="command">scoop</span> bucket add vnxt https://github.com/n-orrow/scoop-vnxt
+                        </div>
+                        <div class="terminal-line">
+                            <span class="prompt">$</span> <span class="command">scoop</span> install vnxt
+                        </div>
+                    </div>
+                    <p>Requires <a href="https://scoop.sh" target="_blank">Scoop</a> and Node.js (<code>scoop install nodejs</code>)</p>
+                </div>
+
+                <div id="install-choco" class="tab-content">
+                    <h3>Chocolatey (Windows)</h3>
+                    <p class="notice">⏳ Pending moderation — will be available on the Chocolatey community repository shortly.</p>
+                    <div class="demo">
+                        <div class="terminal-line">
+                            <span class="prompt">$</span> <span class="command">choco</span> install vnxt
+                        </div>
+                    </div>
+                    <p>Requires <a href="https://chocolatey.org" target="_blank">Chocolatey</a> and Node.js (<code>choco install nodejs</code>)</p>
+                </div>
+
                 <div id="install-source" class="tab-content">
                     <h3>Install from Source</h3>
                     <div class="demo">
-                        <div class="terminal-line">
-                            <span class="comment"># Clone the repository</span>
-                        </div>
                         <div class="terminal-line">
                             <span class="prompt">$</span> <span class="command">git</span> clone
                             https://github.com/n-orrow/vnxt.git
                         </div>
                         <div class="terminal-line">
                             <span class="prompt">$</span> <span class="command">cd</span> vnxt
-                        </div>
-                        <div class="terminal-line"></div>
-                        <div class="terminal-line">
-                            <span class="comment"># Install globally via npm link</span>
                         </div>
                         <div class="terminal-line">
                             <span class="prompt">$</span> <span class="command">npm</span> link

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.11.1] - 2026-02-26
+- chore: updated readme and docs
+
+
 ## [1.11.0] - 2026-02-26
 - minor: added scoop and chocolatey installation methods, including auto version bumping for both packages
 
