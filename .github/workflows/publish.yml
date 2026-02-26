@@ -1,25 +1,33 @@
 name: Publish to npm
-
 on:
   push:
     tags:
       - 'publish/v*'
-
 permissions:
   contents: read
   id-token: write
-
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
-
       - run: npm install -g npm@latest
-
       - run: npm publish --provenance --access public
+
+      - name: Update Scoop bucket
+        env:
+          PAT: ${{ secrets.SCOOP_BUCKET_PAT }}
+        run: |
+          VERSION=${GITHUB_REF_NAME#publish/v}
+          git clone https://x-access-token:${PAT}@github.com/n-orrow/scoop-vnxt.git
+          cd scoop-vnxt
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" bucket/vnxt.json
+          git add bucket/vnxt.json
+          git commit -m "chore: bump vnxt to $VERSION"
+          git push
