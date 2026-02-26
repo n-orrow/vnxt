@@ -17,6 +17,8 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - run: npm install -g npm@latest
       - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Update Scoop bucket
         env:
@@ -31,3 +33,23 @@ jobs:
           git add bucket/vnxt.json
           git commit -m "chore: bump vnxt to $VERSION"
           git push
+
+  chocolatey:
+    runs-on: windows-latest
+    needs: publish
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package and publish to Chocolatey
+        env:
+          CHOCO_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        run: |
+          $version = "${{ github.ref_name }}" -replace "publish/v", ""
+          
+          # Update version in nuspec and install script
+          (Get-Content chocolatey/vnxt.nuspec) -replace '<version>.*</version>', "<version>$version</version>" | Set-Content chocolatey/vnxt.nuspec
+          (Get-Content chocolatey/tools/chocolateyInstall.ps1) -replace "\`$version = '.*'", "`$version = '$version'" | Set-Content chocolatey/tools/chocolateyInstall.ps1
+          
+          # Pack and push
+          choco pack chocolatey/vnxt.nuspec
+          choco push vnxt.$version.nupkg --source https://push.chocolatey.org --api-key $env:CHOCO_API_KEY
