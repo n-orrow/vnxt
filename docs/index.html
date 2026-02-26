@@ -141,6 +141,7 @@
                     <button class="tab-btn active" onclick="switchTab(this, 'install-npm')">npm</button>
                     <button class="tab-btn" onclick="switchTab(this, 'install-scoop')">Scoop</button>
                     <button class="tab-btn" onclick="switchTab(this, 'install-choco')">Chocolatey</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'install-homebrew')">Homebrew</button>
                     <button class="tab-btn" onclick="switchTab(this, 'install-source')">From Source</button>
                 </div>
 
@@ -176,6 +177,19 @@
                         </div>
                     </div>
                     <p>Requires <a href="https://chocolatey.org" target="_blank">Chocolatey</a> and Node.js (<code>choco install nodejs</code>)</p>
+                </div>
+
+                <div id="install-homebrew" class="tab-content">
+                    <h3>Homebrew (macOS/Linux)</h3>
+                    <div class="demo">
+                        <div class="terminal-line">
+                            <span class="prompt">$</span> <span class="command">brew</span> tap n-orrow/vnxt
+                        </div>
+                        <div class="terminal-line">
+                            <span class="prompt">$</span> <span class="command">brew</span> install vnxt
+                        </div>
+                    </div>
+                    <p>Requires <a href="https://brew.sh" target="_blank">Homebrew</a>. Node.js will be installed automatically as a dependency.</p>
                 </div>
 
                 <div id="install-source" class="tab-content">

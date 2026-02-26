@@ -43,6 +43,13 @@ scoop install vnxt
 choco install vnxt
 ```
 
+### Homebrew (macOS/Linux)
+
+```bash
+brew tap n-orrow/vnxt
+brew install vnxt
+```
+
 ### From Source
 
 **Bash/macOS/Linux:**
