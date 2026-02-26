@@ -606,6 +606,10 @@ footer {
         display: block;
     }
 
+    a {
+        color: var(--accent-green);
+    }
+
     h3:first-child {
         margin-top: 0;
     }

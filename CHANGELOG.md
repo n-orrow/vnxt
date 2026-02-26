@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.14.1] - 2026-02-26
+- fix: ugly <a> styling. Fixed it.
+
+
 ## [1.14.0] - 2026-02-26
 - feat: add scoop, homebrew and improved release notes
 
