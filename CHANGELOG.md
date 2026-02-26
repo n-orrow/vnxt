@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.12.0] - 2026-02-26
+- feat: added all commit messages since last publish to release notes, instead of just the current commit message
+
+
 ## [1.11.3] - 2026-02-26
 - chore: didn't add the readme or docs to last push :)
 

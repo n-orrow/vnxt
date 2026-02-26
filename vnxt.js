@@ -402,7 +402,7 @@ function generateChangelog(newVersion, message) {
 // Generate Release Notes
 // =============================================================================
 
-function generateReleaseNotes(newVersion, message, context, packageJson) {
+function generateReleaseNotes(newVersion, message, context, packageJson, isPublish = false) {
     log('📋 Generating release notes...', 'cyan');
 
     const date = new Date();
@@ -412,12 +412,33 @@ function generateReleaseNotes(newVersion, message, context, packageJson) {
     let author = '';
     try { author = execSync('git config user.name', {stdio: 'pipe'}).toString().trim(); } catch {}
 
+    // If publishing, gather all commits since the last publish/v* tag
+    let changes = message;
+    if (isPublish) {
+        try {
+            const lastPublishTag = execSync(
+                'git tag --list "publish/v*" --sort=-version:refname',
+                {stdio: 'pipe'}
+            ).toString().trim().split('\n').filter(Boolean)[0];
+
+            if (lastPublishTag) {
+                const commits = execSync(
+                    `git log ${lastPublishTag}..HEAD --pretty=format:"- %s"`,
+                    {stdio: 'pipe'}
+                ).toString().trim();
+                if (commits) changes = commits;
+            }
+        } catch {
+            // Fall back to current message if git log fails
+        }
+    }
+
     const notes = `# Release ${config.tagPrefix}${newVersion}
 
 Released: ${dateShort} at ${timestamp.split(' ')[1]}${author ? `\nAuthor: ${author}` : ''}
 
 ## Changes
-${message}${context ? `\n\n## Release Notes\n${context}` : ''}
+${changes}${context ? `\n\n## Release Notes\n${context}` : ''}
 
 ## Installation
 \`\`\`bash
@@ -618,7 +639,7 @@ async function main() {
         const { oldVersion, newVersion, packageJson } = bumpVersion(opts);
 
         if (opts.generateChangelog)    generateChangelog(newVersion, opts.message);
-        if (opts.generateReleaseNotes) generateReleaseNotes(newVersion, opts.message, releaseNotesContext, packageJson);
+        if (opts.generateReleaseNotes) generateReleaseNotes(newVersion, opts.message, releaseNotesContext, packageJson, opts.publishToNpm);
         if (opts.push)                 pushToRemote(opts, newVersion);
 
         printSummary(opts, oldVersion, newVersion, branch);
