@@ -81,6 +81,10 @@ jobs:
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
 
+          # Copy files from vnxt repo
+          cp ../aur/PKGBUILD .
+          cp ../aur/.SRCINFO .
+
           # Update version in PKGBUILD and .SRCINFO
           sed -i "s/pkgver=.*/pkgver=$VERSION/" PKGBUILD
           sed -i "s/pkgver = .*/pkgver = $VERSION/" .SRCINFO
