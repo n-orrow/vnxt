@@ -12,6 +12,9 @@
     <bugTrackerUrl>https://github.com/n-orrow/vnxt/issues</bugTrackerUrl>
     <tags>vnxt vx version-bump semver changelog git cli npm</tags>
     <summary>Automated semantic version bumping CLI tool with changelog generation and git integration.</summary>
+    <dependencies>
+      <dependency id="nodejs" version="12.0.0" />
+    </dependencies>
     <description>vnxt (vx) is a lightweight CLI tool for automated semantic version bumping.
 
 It detects the appropriate version bump type from your conventional commit message, updates package.json, creates an annotated git tag, generates a CHANGELOG.md, and optionally pushes to remote — all in one command.

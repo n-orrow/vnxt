@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.15.1] - 2026-02-27
+- patch: added nodejs dependency to vnxt.nuspec to ensure Chocolatey installs Node before running the install script.
+
+
 ## [1.15.0] - 2026-02-26
 - minor: added AUR package manager support
 
