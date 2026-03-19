@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.15.3] - 2026-03-19
+- fix: add refreshenv and bump nodejs dependency
+
+
 ## [1.15.2] - 2026-02-27
 - patch: added nodejs dependency to vnxt.nuspec to ensure Chocolatey installs Node before running the install script.
 
