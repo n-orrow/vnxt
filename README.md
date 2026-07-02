@@ -523,7 +523,7 @@ See `.vnxtrc.json` for full configuration.
 
 ## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Author
 
-Nate Orrow - Software Developer
+Nate Orrow - Software Engineering Masters Student and Software Developer.
 
 ## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> License
 
