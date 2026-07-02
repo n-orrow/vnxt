@@ -140,7 +140,6 @@
                 <div class="tab-buttons">
                     <button class="tab-btn active" onclick="switchTab(this, 'install-npm')">npm</button>
                     <button class="tab-btn" onclick="switchTab(this, 'install-scoop')">Scoop</button>
-                    <button class="tab-btn" onclick="switchTab(this, 'install-choco')">Chocolatey</button>
                     <button class="tab-btn" onclick="switchTab(this, 'install-homebrew')">Homebrew</button>
                     <button class="tab-btn" onclick="switchTab(this, 'install-source')">From Source</button>
                 </div>
@@ -166,17 +165,6 @@
                         </div>
                     </div>
                     <p>Requires <a href="https://scoop.sh" target="_blank">Scoop</a> and Node.js (<code>scoop install nodejs</code>)</p>
-                </div>
-
-                <div id="install-choco" class="tab-content">
-                    <h3>Chocolatey (Windows)</h3>
-                    <p class="notice">⏳ Pending moderation — will be available on the Chocolatey community repository shortly.</p>
-                    <div class="demo">
-                        <div class="terminal-line">
-                            <span class="prompt">$</span> <span class="command">choco</span> install vnxt
-                        </div>
-                    </div>
-                    <p>Requires <a href="https://chocolatey.org" target="_blank">Chocolatey</a> and Node.js (<code>choco install nodejs</code>)</p>
                 </div>
 
                 <div id="install-homebrew" class="tab-content">
