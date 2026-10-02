@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.15.4] - 2026-10-02
+- fix: version tag now lands on the final commit
+
+
 ## [1.15.3] - 2026-03-19
 - fix: add refreshenv and bump nodejs dependency
 

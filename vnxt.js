@@ -359,7 +359,16 @@ function bumpVersion(opts) {
 
     const newVersion = JSON.parse(fs.readFileSync('./package.json', 'utf8')).version;
 
-    // Stage package files and commit
+    return { oldVersion, newVersion, packageJson };
+}
+
+// =============================================================================
+// Commit and Tag
+// =============================================================================
+
+// Runs once every file (version, changelog, release notes) has been written and
+// staged, so there is a single commit and the tag lands on that final commit.
+function commitAndTag(opts, newVersion) {
     execSync('git add package.json', {stdio: 'pipe'});
     if (fs.existsSync('package-lock.json')) {
         execSync('git add package-lock.json', {stdio: 'pipe'});
@@ -370,8 +379,6 @@ function bumpVersion(opts) {
     log('🏷️  Adding tag annotation...', 'cyan');
     const tagMessage = `Version ${newVersion}\n\n${opts.message}`;
     execFileSync('git', ['tag', '-a', `${config.tagPrefix}${newVersion}`, '-m', tagMessage], {stdio: 'pipe'});
-
-    return { oldVersion, newVersion, packageJson };
 }
 
 // =============================================================================
@@ -395,12 +402,16 @@ function generateChangelog(newVersion, message) {
     fs.writeFileSync('CHANGELOG.md', lines.join('\n'));
 
     execSync('git add CHANGELOG.md', {stdio: 'pipe'});
-    execSync('git commit --amend --no-edit', {stdio: 'pipe'});
 }
 
 // =============================================================================
 // Generate Release Notes
 // =============================================================================
+
+// Mirrors git's own idea of a subject: the first paragraph, joined onto one line
+function commitSubject(message) {
+    return message.split(/\r?\n\r?\n/)[0].replace(/\s*\r?\n\s*/g, ' ').trim();
+}
 
 function generateReleaseNotes(newVersion, message, context, packageJson, isPublish = false) {
     log('📋 Generating release notes...', 'cyan');
@@ -422,11 +433,12 @@ function generateReleaseNotes(newVersion, message, context, packageJson, isPubli
             ).toString().trim().split('\n').filter(Boolean)[0];
 
             if (lastPublishTag) {
-                const commits = execSync(
+                // The commit for this release does not exist yet, so its subject is added by hand
+                const earlier = execSync(
                     `git log ${lastPublishTag}..HEAD --pretty=format:"- %s"`,
                     {stdio: 'pipe'}
                 ).toString().trim();
-                if (commits) changes = commits;
+                changes = [`- ${commitSubject(message)}`, earlier].filter(Boolean).join('\n');
             }
         } catch {
             // Fall back to current message if git log fails
@@ -457,7 +469,6 @@ See [CHANGELOG.md](../CHANGELOG.md) for complete version history.
     log(`   Created: ${filename}`);
 
     execSync(`git add ${filename}`, {stdio: 'pipe'});
-    execSync('git commit --amend --no-edit', {stdio: 'pipe'});
 }
 
 // =============================================================================
@@ -640,6 +651,9 @@ async function main() {
 
         if (opts.generateChangelog)    generateChangelog(newVersion, opts.message);
         if (opts.generateReleaseNotes) generateReleaseNotes(newVersion, opts.message, releaseNotesContext, packageJson, opts.publishToNpm);
+
+        commitAndTag(opts, newVersion);
+
         if (opts.push)                 pushToRemote(opts, newVersion);
 
         printSummary(opts, oldVersion, newVersion, branch);
