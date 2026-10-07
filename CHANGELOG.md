@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.16.0] - 2026-10-07
+- feat: workspace support, first steps
+
+
 ## [1.15.4] - 2026-10-02
 - fix: version tag now lands on the final commit
 

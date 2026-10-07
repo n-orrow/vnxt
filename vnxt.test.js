@@ -1,6 +1,8 @@
+// vnxt.test.js
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 // =============================================================================
 // Test Helpers
@@ -9,9 +11,9 @@ const path = require('path');
 const vnxtPath = path.join(__dirname, 'vnxt.js');
 
 function createTestRepo(testDir) {
-    if (!fs.existsSync(testDir)) {
-        fs.mkdirSync(testDir, { recursive: true });
-    }
+    // A folder left behind by a failed cleanup would poison this test, so start clean
+    removeDir(testDir, 25);
+    fs.mkdirSync(testDir, { recursive: true });
     execSync('git init -b main', { cwd: testDir });
     execSync('git config user.email "test@test.com"', { cwd: testDir });
     execSync('git config user.name "Test User"', { cwd: testDir });
@@ -23,16 +25,32 @@ function createTestRepo(testDir) {
     execSync('git commit -m "initial commit"', { cwd: testDir });
 }
 
+// Windows can hold a lock on a fresh .git folder for a while (antivirus, indexer).
+// Retry with a real pause rather than a spinning loop, and fail loudly if it will not go.
+function sleep(ms) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function removeDir(dir, attempts) {
+    for (let attempt = 1; ; attempt++) {
+        try {
+            fs.rmSync(dir, { recursive: true, force: true });
+            return;
+        } catch (err) {
+            if (attempt >= attempts) {
+                throw new Error(`Could not remove ${dir} after ${attempts} attempts: ${err.message}`);
+            }
+            sleep(200);
+        }
+    }
+}
+
+// Cleanup is best effort: createTestRepo clears any leftover before the next use.
 function cleanupTestRepo(testDir) {
-    if (!fs.existsSync(testDir)) return;
-    const delay = ms => { const s = Date.now(); while (Date.now() - s < ms) {} };
-    delay(100);
     try {
-        fs.rmSync(testDir, { recursive: true, force: true });
+        removeDir(testDir, 5);
     } catch {
-        delay(500);
-        try { fs.rmSync(testDir, { recursive: true, force: true }); }
-        catch { console.warn(`Warning: Could not cleanup ${testDir}`); }
+        console.warn(`Warning: Could not cleanup ${testDir}`);
     }
 }
 
@@ -208,6 +226,7 @@ describe('Git Integration', () => {
         // The initial commit is commit #1; after bump there is a HEAD~1, so
         // to test the single-commit edge case we need a fresh repo with no prior commits.
         const singleDir = path.join(__dirname, 'test-singlecommit');
+        removeDir(singleDir, 25);
         fs.mkdirSync(singleDir, { recursive: true });
         execSync('git init', { cwd: singleDir });
         execSync('git config user.email "test@test.com"', { cwd: singleDir });
@@ -482,8 +501,9 @@ describe('Error Handling', () => {
     });
 
     test('fails outside a git repo', () => {
-        const nonGitDir = path.join(__dirname, 'test-nogit');
-        fs.mkdirSync(nonGitDir, { recursive: true });
+        // Must live outside this repo: vnxt looks for the repo root above the folder
+        // it is started in, so a folder inside this repo would find this repo.
+        const nonGitDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vnxt-nogit-'));
         fs.writeFileSync(path.join(nonGitDir, 'package.json'), JSON.stringify({ name: 'x', version: '1.0.0' }));
         try {
             expect(() => execSync(`node ${vnxtPath} -m "fix: no git"`, { cwd: nonGitDir, stdio: 'pipe' })).toThrow();
