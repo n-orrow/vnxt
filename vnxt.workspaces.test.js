@@ -1,9 +1,4 @@
 // vnxt.workspaces.test.js
-//
-// Unit tests for how vnxt finds workspaces and decides which one a command means.
-// No git, no npm and no spawned processes: each test builds a small tree of
-// package.json files under the OS temp folder and calls vnxt's functions directly.
-
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -13,6 +8,7 @@ const {
     parseSelectors,
     collectWorkspaceSelectors,
     setLockfileVersion,
+    workspaceTagName,
     resolveTargets,
     inferTarget
 } = require('./vnxt.js');
@@ -32,12 +28,7 @@ afterAll(() => {
     }
 });
 
-// =============================================================================
-// Helpers
-// =============================================================================
-
-// Builds a repo from { 'relative/path': contents }. Objects become JSON files,
-// strings are written as they are, and null just creates the folder.
+// Builds a repo from { 'relative/path': contents }
 function buildRepo(files) {
     const root = path.join(tmpRoot, `repo-${++counter}`);
     fs.mkdirSync(root, { recursive: true });
@@ -53,7 +44,7 @@ function buildRepo(files) {
     return root;
 }
 
-// Two apps and three source-only packages, plus folders that must be ignored.
+// Two apps and three source-only packages, plus folders that must be ignored
 function standardRepo(rootExtras = {}) {
     return buildRepo({
         'package.json': {
@@ -88,21 +79,11 @@ function messageOf(fn) {
     throw new Error('Expected a UserError, but nothing was thrown');
 }
 
-// =============================================================================
-// Importing vnxt.js
-// =============================================================================
-
 describe('importing vnxt.js', () => {
     test('does not run the command line tool', () => {
-        // If importing ran main(), this file would already have exited or failed
-        // looking for a git repository. Reaching this test is the proof.
         expect(typeof resolveTargets).toBe('function');
     });
 });
-
-// =============================================================================
-// readWorkspaces
-// =============================================================================
 
 describe('readWorkspaces', () => {
     test('finds folders matched by a trailing *, skipping hidden, node_modules and non-packages', () => {
@@ -227,10 +208,6 @@ describe('readWorkspaces', () => {
     });
 });
 
-// =============================================================================
-// parseSelectors
-// =============================================================================
-
 describe('parseSelectors', () => {
     test('splits comma lists and flattens repeated flags', () => {
         expect(parseSelectors(['app-one,app-two', 'packages/shared-api'])).toEqual([
@@ -249,10 +226,6 @@ describe('parseSelectors', () => {
     });
 });
 
-// =============================================================================
-// setLockfileVersion
-// =============================================================================
-
 describe('setLockfileVersion', () => {
     const packages = () => ({
         '': { name: 'r', workspaces: ['apps/*'] },
@@ -260,7 +233,7 @@ describe('setLockfileVersion', () => {
         'apps/b': { version: '2.0.0' }
     });
 
-    // Lockfile text in a given style, so every style can be checked byte for byte.
+    // Lockfile text in a given style, so every style can be checked byte for byte
     function lockText(pkgs, { indent = 2, newline = '\n', final = true } = {}) {
         const json = JSON.stringify({ name: 'r', lockfileVersion: 3, packages: pkgs }, null, indent);
         return json.replace(/\n/g, newline) + (final ? newline : '');
@@ -320,9 +293,25 @@ describe('setLockfileVersion', () => {
     });
 });
 
-// =============================================================================
-// collectWorkspaceSelectors
-// =============================================================================
+describe('workspaceTagName', () => {
+    test.each([
+        ['app-one', '0.1.2', 'app-one@0.1.2'],
+        ['@acme/ui', '1.0.0', 'acme/ui@1.0.0'],
+        ['@acme/errors', '2.0.0-beta.1', 'acme/errors@2.0.0-beta.1'],
+        ['plain', '1.0.0+build.5', 'plain@1.0.0+build.5']
+    ])('%s at %s is tagged %s', (name, version, expected) => {
+        expect(workspaceTagName({ name }, version)).toBe(expected);
+    });
+
+    test('two workspaces at the same version get different tags', () => {
+        expect(workspaceTagName({ name: 'app-a' }, '0.1.2')).not.toBe(workspaceTagName({ name: 'app-b' }, '0.1.2'));
+    });
+
+    test('a scoped and an unscoped name cannot produce the same tag', () => {
+        expect(workspaceTagName({ name: '@a/b' }, '1.0.0')).toBe('a/b@1.0.0');
+        expect(workspaceTagName({ name: 'a' }, '1.0.0')).toBe('a@1.0.0');
+    });
+});
 
 describe('collectWorkspaceSelectors', () => {
     test.each([
@@ -353,10 +342,6 @@ describe('collectWorkspaceSelectors', () => {
         expect(collectWorkspaceSelectors(['-m', 'fix: app-one', '-w', 'app-two'])).toEqual(['app-two']);
     });
 });
-
-// =============================================================================
-// resolveTargets: choosing with -w
-// =============================================================================
 
 describe('resolveTargets with selectors', () => {
     test('finds a workspace by package name, scoped or not', () => {
@@ -438,10 +423,6 @@ describe('resolveTargets with selectors', () => {
     });
 });
 
-// =============================================================================
-// resolveTargets: working it out from the current folder
-// =============================================================================
-
 describe('resolveTargets without selectors', () => {
     test.each([
         ['the workspace folder itself', 'apps/app-one', 'app-one'],
@@ -487,10 +468,6 @@ describe('resolveTargets without selectors', () => {
             .toContain('none of them were found');
     });
 });
-
-// =============================================================================
-// inferTarget
-// =============================================================================
 
 describe('inferTarget', () => {
     test('returns the nearest enclosing workspace, or null', () => {

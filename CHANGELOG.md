@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.0.0] - 2026-10-07
+- feat!: add npm workspaces support
+
+
 ## [1.16.0] - 2026-10-07
 - feat: workspace support, first steps
 

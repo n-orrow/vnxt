@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- index.html -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -70,6 +71,7 @@
             <li><a href="#installation" class="nav-link">Installation</a></li>
             <li><a href="#quickstart" class="nav-link">Quick Start</a></li>
             <li><a href="#usage" class="nav-link">Usage</a></li>
+            <li><a href="#monorepos" class="nav-link">Monorepos</a></li>
             <li><a href="#configuration" class="nav-link">Configuration</a></li>
             <li><a href="#examples" class="nav-link">Examples</a></li>
             <li><a href="#preflight" class="nav-link">Pre-flight</a></li>
@@ -129,6 +131,11 @@
                     <span class="emoji">📦</span>
                     <h3>Automated npm Publishing</h3>
                     <p>Trigger npm releases via GitHub Actions Trusted Publishing</p>
+                </div>
+                <div class="feature">
+                    <span class="emoji">🗂️</span>
+                    <h3>Monorepo Support</h3>
+                    <p>Version, commit and tag npm workspaces one at a time</p>
                 </div>
             </div>
         </section>
@@ -296,6 +303,14 @@
                             <span>Stage files before versioning (tracked, all, interactive, patch)</span>
                         </div>
                         <div class="option-row">
+                            <code>-w, --workspace &lt;name&gt;</code>
+                            <span>Release one or more npm workspaces, by name or folder (repeatable)</span>
+                        </div>
+                        <div class="option-row">
+                            <code>-lw, --list-workspaces</code>
+                            <span>List the workspaces in this repo and what has changed in each</span>
+                        </div>
+                        <div class="option-row">
                             <code>-r, --release</code>
                             <span>Generate release notes file (saved to release-notes/)</span>
                         </div>
@@ -384,6 +399,90 @@
             </div>
         </section>
 
+        <section id="monorepos">
+            <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Monorepos (npm workspaces)</h2>
+
+            <p>If the root <code>package.json</code> declares <code>workspaces</code>, vnxt switches to workspace mode. Each workspace is versioned, committed and tagged on its own, because one commit per thing that changed keeps the history readable.</p>
+
+            <div class="tabs">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="switchTab(this, 'mono-choosing')">Choosing</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'mono-release')">What a release does</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'mono-safety')">Safety checks</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'mono-pushing')">Pushing</button>
+                </div>
+
+                <div id="mono-choosing" class="tab-content active">
+                    <h3>Choosing what to release</h3>
+                    <div class="demo">
+                        <div class="terminal-line">
+                            <span class="comment"># List workspaces, versions, latest tags and pending changes</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-lw</span>
+                        </div>
+                        <div class="terminal-line"></div>
+                        <div class="terminal-line">
+                            <span class="comment"># By package name, or by folder</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-w</span> app-one <span class="flag">-m</span> <span class="string">"fix: totals"</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-w</span> apps/app-one <span class="flag">-m</span> <span class="string">"fix: totals"</span>
+                        </div>
+                        <div class="terminal-line"></div>
+                        <div class="terminal-line">
+                            <span class="comment"># Several at once</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-w</span> app-one <span class="flag">-w</span> app-two <span class="flag">-m</span> <span class="string">"chore: bump deps"</span>
+                        </div>
+                    </div>
+                    <p>From inside a workspace folder, that workspace is used without <code>-w</code>. From the repo root with no <code>-w</code>, vnxt stops and lists the workspaces rather than guessing. It never versions the root package itself.</p>
+                    <p>A workspace with no version yet needs <code>-sv</code> to give it one, for example <code>-sv 1.0.0</code>. <code>-sv</code>, <code>-a patch</code> and <code>-a interactive</code> need exactly one workspace.</p>
+                </div>
+
+                <div id="mono-release" class="tab-content">
+                    <h3>What a release does</h3>
+                    <p>For each workspace vnxt:</p>
+                    <ul>
+                        <li>bumps the version in that workspace's <code>package.json</code> and nothing else in it (line endings and the final newline are left as they were)</li>
+                        <li>updates the matching entry in the root <code>package-lock.json</code>, without running <code>npm install</code></li>
+                        <li>writes <code>CHANGELOG.md</code> inside the workspace folder (unless <code>autoChangelog</code> is off)</li>
+                        <li>makes one commit containing that workspace's folder and the lockfile, and nothing outside them</li>
+                        <li>creates an annotated tag named <code>&lt;name&gt;@&lt;version&gt;</code>, with the leading <code>@</code> of a scope dropped, so <code>@acme/ui</code> 1.2.0 becomes <code>acme/ui@1.2.0</code></li>
+                    </ul>
+                    <p>Anything you have staged elsewhere in the repo is left staged and is not committed. With several workspaces you get one commit and one tag each, then a single push at the end. If one fails, vnxt stops, rolls that workspace back and tells you which ones were already done.</p>
+                    <p><code>-a tracked</code> and <code>-a all</code> only stage inside the chosen workspace's folder. Without <code>-a</code>, vnxt commits what you have already staged there. <code>-r</code> writes notes to <code>&lt;workspace&gt;/release-notes/&lt;name&gt;@&lt;version&gt;.md</code>. <code>tagPrefix</code> does not apply to workspace tags.</p>
+                </div>
+
+                <div id="mono-safety" class="tab-content">
+                    <h3>Safety checks</h3>
+                    <p>vnxt refuses to continue, before changing anything, when:</p>
+                    <ul>
+                        <li>there have been no changes in the workspace since its last tag (<code>-sv</code> is the deliberate way past this)</li>
+                        <li>the tag it would create already exists</li>
+                        <li>a merge, rebase, cherry-pick or similar is in progress</li>
+                        <li>HEAD is detached</li>
+                        <li>you asked to push and there is no remote or upstream</li>
+                    </ul>
+                    <p><code>--publish</code> is also refused in workspace mode. Apps are deployed as builds, and shared packages are used through the workspace links, so there is nothing to publish.</p>
+                </div>
+
+                <div id="mono-pushing" class="tab-content">
+                    <h3>Pushing</h3>
+                    <p>Workspace mode pushes only when you pass <code>-p</code>. <code>autoPush</code> is ignored here, because it was written for single-package repos and would otherwise send several tags at once. If you do want automatic pushes, set <code>workspaceAutoPush</code> to <code>true</code> in <code>.vnxtrc.json</code>. <code>-dnp</code> always wins.</p>
+                    <div class="demo">
+                        <div class="terminal-line">
+                            <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-w</span> app-one <span class="flag">-m</span> <span class="string">"fix: bug"</span> <span class="flag">-p</span>
+                        </div>
+                    </div>
+                    <p>A push uses <code>--follow-tags</code>, so any annotated tags you made earlier and never pushed go up too. The dry run (<code>-d</code>) lists them.</p>
+                </div>
+            </div>
+        </section>
+
         <section id="configuration">
             <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Configuration</h2>
 
@@ -433,7 +532,15 @@
                         <span class="type">boolean</span>
                         <span class="default">default: true</span>
                     </div>
-                    <p>Automatically push to remote after bumping</p>
+                    <p>Automatically push to remote after bumping. Ignored in workspace mode</p>
+                </div>
+                <div class="config-row">
+                    <div class="config-option">
+                        <code>workspaceAutoPush</code>
+                        <span class="type">boolean</span>
+                        <span class="default">default: false</span>
+                    </div>
+                    <p>Push automatically after a workspace release. Only a literal <code>true</code> turns it on, and <code>-dnp</code> overrides it. With several workspaces it pushes every new tag at once, so check with <code>-d</code> first if you are unsure</p>
                 </div>
                 <div class="config-row">
                     <div class="config-option">
@@ -449,7 +556,7 @@
                         <span class="type">string</span>
                         <span class="default">default: "v"</span>
                     </div>
-                    <p>Prefix for git tags. Use "v" for v1.2.3, "" for 1.2.3, or "release-" for release-1.2.3</p>
+                    <p>Prefix for git tags. Use "v" for v1.2.3, "" for 1.2.3, or "release-" for release-1.2.3. Not used in workspace mode, where tags are always &lt;name&gt;@&lt;version&gt;</p>
                 </div>
                 <div class="config-row">
                     <div class="config-option">
@@ -565,6 +672,35 @@
                     <div class="terminal-line"></div>
                     <div class="terminal-line">
                         <span class="comment"># Minimal output - only errors shown</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-group">
+                <h3>Monorepo (npm workspaces)</h3>
+                <div class="demo">
+                    <div class="terminal-line">
+                        <span class="comment"># See what has changed in each workspace</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-lw</span>
+                    </div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line">
+                        <span class="comment"># Preview, then release one workspace</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-w</span> app-one <span class="flag">-m</span> <span class="string">"fix: totals"</span> <span class="flag">-d</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-w</span> app-one <span class="flag">-m</span> <span class="string">"fix: totals"</span>
+                    </div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line">
+                        <span class="comment"># Several workspaces: one commit and tag each, one push at the end</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="prompt">$</span> <span class="command">vx</span> <span class="flag">-w</span> app-one <span class="flag">-w</span> app-two <span class="flag">-m</span> <span class="string">"chore: bump deps"</span> <span class="flag">-p</span>
                     </div>
                 </div>
             </div>
@@ -712,7 +848,7 @@
             <h2><img src="logos/caret-38x38.png" alt="" class="caret"> Requirements</h2>
 
             <ul>
-                <li>Node.js 12.x or higher</li>
+                <li>Node.js 14.x or higher</li>
                 <li>npm 6.x or higher</li>
                 <li>Git installed and configured</li>
             </ul>

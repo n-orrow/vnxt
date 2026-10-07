@@ -1,7 +1,7 @@
 {
   "name": "vnxt",
-  "version": "1.16.0",
-  "description": "Version incrementation CLI tool with built in git commit, push and changelog generation",
+  "version": "2.0.0",
+  "description": "Version incrementation CLI tool with built in git commit, push and changelog generation, including npm workspaces",
   "main": "vnxt.js",
   "bin": {
     "vnxt": "vnxt.js",
@@ -19,7 +19,9 @@
     "changelog",
     "cli",
     "release",
-    "npm"
+    "npm",
+    "monorepo",
+    "workspaces"
   ],
   "author": "Nate Orrow | Nate@Orrow.uk",
   "license": "MIT",
@@ -32,7 +34,7 @@
   },
   "homepage": "https://vnxt.dev",
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=14.14.0"
   },
   "files": [
     "vnxt.js",

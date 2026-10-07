@@ -1,15 +1,5 @@
 #!/usr/bin/env node
 
-// =============================================================================
-// TODOs
-// -----------------------------------------------------------------------------
-// 1. Nothing comes to mind right now
-// =============================================================================
-
-// =============================================================================
-// Imports & Constants
-// =============================================================================
-
 const {execSync, execFileSync} = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -32,10 +22,6 @@ const colors = {
 const args = process.argv.slice(2);
 let quietMode = false;
 
-// =============================================================================
-// Logging
-// =============================================================================
-
 function log(message, color = '') {
     if (quietMode) return;
     if (color && colors[color] && config.colors) {
@@ -53,10 +39,6 @@ function logError(message) {
     }
 }
 
-// =============================================================================
-// Argument Helpers
-// =============================================================================
-
 function getFlag(flag, short) {
     const index = args.indexOf(flag) !== -1 ? args.indexOf(flag) : args.indexOf(short);
     if (index === -1) return null;
@@ -67,16 +49,13 @@ function hasFlag(flag, short) {
     return args.includes(flag) || (short ? args.includes(short) : false);
 }
 
-// =============================================================================
-// Load Config
-// =============================================================================
-
 function loadConfig() {
     const defaults = {
         autoChangelog: true,
         defaultType: 'patch',
         requireCleanWorkingDir: false,
         autoPush: true,
+        workspaceAutoPush: false,
         defaultStageMode: 'tracked',
         tagPrefix: 'v',
         colors: true
@@ -90,16 +69,9 @@ function loadConfig() {
     return defaults;
 }
 
-// The real settings are loaded in main(), once vnxt is standing in the repo root.
 let config = { colors: true };
 
-// =============================================================================
-// Repo Root
-// =============================================================================
-
-// Moves into the top of the git repository, so every relative path used below
-// (package.json, .vnxtrc.json, CHANGELOG.md, release-notes/) means the same
-// thing wherever vnxt was started. Does nothing outside a git repository.
+// Moves into the repo root so relative paths resolve from there
 function enterRepoRoot() {
     const startDir = process.cwd();
 
@@ -127,9 +99,7 @@ function declaresWorkspaces(pkg) {
     return Array.isArray(pkg.workspaces) || (!!pkg.workspaces && Array.isArray(pkg.workspaces.packages));
 }
 
-// In a plain repo, started below the root, vnxt can only act on the root package.
-// That is safe unless the folder holds its own package.json, because the person
-// almost certainly means that package instead.
+// In a plain repo, started below the root, vnxt can only act on the root package
 function refuseAmbiguousSubfolder(location) {
     if (!location.moved) return;
 
@@ -145,12 +115,6 @@ function refuseAmbiguousSubfolder(location) {
     }
 }
 
-// =============================================================================
-// Workspaces
-// =============================================================================
-
-// Problems the person can fix (a wrong -w value, the wrong folder) are thrown as
-// UserError, so they print as a plain message rather than a stack trace.
 class UserError extends Error {}
 
 function toPosix(p) {
@@ -161,9 +125,7 @@ function escapeRegExp(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Turns one entry of the workspaces field into folder names relative to the root.
-// Supports plain folders and a * in the last segment (apps/*, packages/ui-*).
-// Anything fancier is refused loudly rather than guessed at.
+// Turns one entry of the workspaces field into folder names relative to the root
 function expandWorkspacePattern(root, pattern) {
     const clean = toPosix(pattern).replace(/^\.\//, '').replace(/\/+$/, '');
     const segments = clean.split('/');
@@ -195,7 +157,7 @@ function expandWorkspacePattern(root, pattern) {
         .map(e => (parent ? `${parent}/${e.name}` : e.name));
 }
 
-// Lists the workspaces the root package.json declares, as they exist on disk.
+// Lists the workspaces the root package.json declares, as they exist on disk
 function readWorkspaces(root, rootPackage) {
     const pkg = rootPackage || readJsonIfExists(path.join(root, 'package.json'));
     if (!pkg || !declaresWorkspaces(pkg)) return [];
@@ -240,7 +202,7 @@ function readWorkspaces(root, rootPackage) {
     return found;
 }
 
-// Accepts values from repeated flags and comma lists: ['a,b', 'c'] gives ['a', 'b', 'c'].
+// Accepts values from repeated flags and comma lists: ['a,b', 'c'] gives ['a', 'b', 'c']
 function parseSelectors(values) {
     const list = [];
     for (const value of [].concat(values || [])) {
@@ -252,9 +214,7 @@ function parseSelectors(values) {
     return list;
 }
 
-// Collects every value given to -w / --workspace from an argv list: repeated flags,
-// comma lists, space separated values and --workspace=value all work. A value is any
-// token that does not start with '-', so one flag never swallows the next.
+// Collects every -w / --workspace value from argv
 function collectWorkspaceSelectors(argv) {
     const values = [];
 
@@ -286,8 +246,7 @@ function describeWorkspaces(workspaces) {
     return workspaces.map(ws => `${ws.name} (${ws.dir})`).join(', ');
 }
 
-// A selector is a package name or a folder. Folders are tried relative to where
-// vnxt was started first, then relative to the repo root.
+// A selector is a package name or a folder
 function resolveSelector(selector, { root, startDir, workspaces, rootName }) {
     const rootError = () => new UserError(
         `'${selector}' is the repo root, which vnxt does not version. Choose a workspace: ${describeWorkspaces(workspaces)}.`
@@ -315,8 +274,7 @@ function resolveSelector(selector, { root, startDir, workspaces, rootName }) {
     throw new UserError(`No workspace matches '${selector}'. Available: ${describeWorkspaces(workspaces)}.`);
 }
 
-// The workspace whose folder contains startDir, or null when startDir is the
-// root, a folder between workspaces, or outside the repo altogether.
+// The workspace whose folder contains startDir, or null
 function inferTarget(startDir, root, workspaces) {
     let rel = toPosix(path.relative(root, startDir));
     if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) return null;
@@ -331,9 +289,7 @@ function inferTarget(startDir, root, workspaces) {
     }
 }
 
-// Decides which workspaces a command means. Returns null for a repo without
-// workspaces (plain single-package behaviour). Otherwise returns a non-empty list,
-// or throws a UserError saying why it cannot tell.
+// Decides which workspaces a command means
 function resolveTargets({ root, startDir, selectors }) {
     const rootPackage = readJsonIfExists(path.join(root, 'package.json'));
     const wanted = parseSelectors(selectors);
@@ -364,10 +320,6 @@ function resolveTargets({ root, startDir, selectors }) {
     throw new UserError(`Run vnxt from inside a workspace folder, or choose one with -w. Workspaces: ${describeWorkspaces(workspaces)}.`);
 }
 
-// =============================================================================
-// Workspace Mode
-// =============================================================================
-
 const LOCKFILE = 'package-lock.json';
 
 function gitOut(args) {
@@ -382,10 +334,7 @@ function uniqueSorted(list) {
     return [...new Set(list)].sort();
 }
 
-// Sets the version in a workspace's own lockfile entry and touches nothing else,
-// keeping the file's indentation, line endings and final newline exactly as they
-// were. A lockfile that does not survive a parse and rewrite unchanged is refused
-// rather than reformatted. A workspace with no entry is left alone.
+// Sets the version in a workspace's own lockfile entry and touches nothing else
 function setLockfileVersion(text, dir, version) {
     const newline = text.includes('\r\n') ? '\r\n' : '\n';
     const indent = (text.match(/^([ \t]+)"/m) || [])[1] || 2;
@@ -410,6 +359,14 @@ function setLockfileVersion(text, dir, version) {
     return write(lock);
 }
 
+// npm rewrites a manifest in its own layout (LF, final newline)
+function matchLayout(original, updated) {
+    if (original === null || original === undefined) return updated;
+    const eol = original.includes('\r\n') ? '\r\n' : '\n';
+    const body = updated.replace(/(\r?\n)+$/, '').replace(/\r\n/g, '\n').replace(/\n/g, eol);
+    return /(\r?\n)$/.test(original) ? body + eol : body;
+}
+
 function snapshotFiles(files) {
     const snapshot = {};
     for (const file of files) {
@@ -418,7 +375,7 @@ function snapshotFiles(files) {
     return snapshot;
 }
 
-// Puts files back as they were, and takes them out of the index again.
+// Puts files back as they were, and takes them out of the index again
 function restoreFiles(snapshot) {
     for (const [file, content] of Object.entries(snapshot)) {
         if (content === null) fs.rmSync(file, {force: true});
@@ -427,7 +384,6 @@ function restoreFiles(snapshot) {
         try {
             execFileSync('git', ['reset', '-q', '--', file], {stdio: 'pipe'});
         } catch {
-            // Not known to git, so there is nothing to take out of the index
         }
     }
 }
@@ -436,14 +392,14 @@ function quoteForDisplay(arg) {
     return /^[\w./@:=+,-]+$/.test(arg) ? arg : JSON.stringify(arg);
 }
 
-// Everything the real run does to git, as data, so the dry run prints exactly
-// what the real run executes. The commit is made from a temporary copy of the
-// index in which everything outside this workspace (and the lockfile) is put
-// back to HEAD, so other staged work is neither committed nor disturbed.
+// The git steps of a real run, as data, so the dry run can print them
 function buildCommitPlan(ws, opts, hasLockfile) {
     const lock = hasLockfile ? [LOCKFILE] : [];
     const keep = [ws.dir, ...lock];
     const versionFiles = [`${ws.dir}/package.json`, ...(opts.generateChangelog ? [`${ws.dir}/CHANGELOG.md`] : []), ...lock];
+
+    const picking = opts.addMode === 'patch' || opts.addMode === 'interactive';
+    const pick = picking ? ['add', opts.addMode === 'patch' ? '-p' : '-i', '--', ws.dir] : null;
 
     const stage = [];
     if (opts.addMode === 'all') stage.push(['add', '-A', '--', ws.dir]);
@@ -451,6 +407,7 @@ function buildCommitPlan(ws, opts, hasLockfile) {
     stage.push(['add', '--', ...versionFiles]);
 
     return {
+        pick,
         stage,
         resetOthers: ['reset', '-q', '--', '.', ...keep.map(p => `:(exclude,literal)${p}`)],
         commit: ['commit', '-m', opts.message],
@@ -458,29 +415,205 @@ function buildCommitPlan(ws, opts, hasLockfile) {
     };
 }
 
-function commitWithTemporaryIndex(plan, quiet) {
+function makeTemporaryIndex() {
     const realIndex = path.resolve(gitOut(['rev-parse', '--git-path', 'index']).trim());
     const tempIndex = `${realIndex}.vnxt-${process.pid}`;
+    fs.copyFileSync(realIndex, tempIndex);
+    return tempIndex;
+}
+
+function removeTemporaryIndex(tempIndex) {
+    if (!tempIndex) return;
+    fs.rmSync(tempIndex, {force: true});
+    fs.rmSync(`${tempIndex}.lock`, {force: true});
+}
+
+// Lets the person choose what goes into the commit, using a copy of the index
+function pickChanges(ws, plan) {
+    const tempIndex = makeTemporaryIndex();
+    const env = {...process.env, GIT_INDEX_FILE: tempIndex};
+    try {
+        log(`\n🧩 Choose the changes to commit in ${ws.dir} (git ${plan.pick.slice(0, 2).join(' ')})...`, 'cyan');
+        if (plan.pick[1] === '-p') {
+            log('   y  stage this hunk        n  skip this hunk        q  quit, staging nothing more', 'gray');
+            log('   s  split into smaller hunks        ?  git\'s full help', 'gray');
+        } else {
+            log('   Choose a command by number or name: \'patch\' picks hunks, \'quit\' finishes.', 'gray');
+            log('   A blank line ends a file selection.        ?  git\'s full help', 'gray');
+        }
+        log('   Choosing nothing stops the run and changes nothing.', 'gray');
+        try {
+            execFileSync('git', plan.pick, {env, stdio: 'inherit'});
+        } catch (err) {
+            throw new UserError(`Git could not run the change selection (${err.message}). Nothing was changed.`);
+        }
+
+        const chosen = execFileSync('git', ['diff', '--cached', '--name-only', '-z', '--', ws.dir], {env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']})
+            .split('\0').filter(Boolean);
+        if (!chosen.length) {
+            throw new UserError(`You have not selected any changes in ${ws.dir}, so nothing was committed and nothing was changed. Select at least one change, or use -a tracked to commit everything tracked.`);
+        }
+        return tempIndex;
+    } catch (err) {
+        removeTemporaryIndex(tempIndex);
+        throw err;
+    }
+}
+
+// Commits from a temporary copy of the index
+function commitWithTemporaryIndex(plan, quiet, preparedIndex = null) {
+    const tempIndex = preparedIndex || makeTemporaryIndex();
     const env = {...process.env, GIT_INDEX_FILE: tempIndex};
 
-    fs.copyFileSync(realIndex, tempIndex);
     try {
         execFileSync('git', plan.resetOthers, {env, stdio: 'pipe'});
         execFileSync('git', plan.commit, {env, stdio: quiet ? 'pipe' : 'inherit'});
     } finally {
-        fs.rmSync(tempIndex, {force: true});
-        fs.rmSync(`${tempIndex}.lock`, {force: true});
+        removeTemporaryIndex(tempIndex);
     }
 }
 
-// Reasons a real run would stop before changing anything.
-function workspaceProblems(ws) {
+// Tag name <name>@<version>, with the leading @ of a scope dropped
+function workspaceTagName(ws, version) {
+    return `${ws.name.replace(/^@/, '')}@${version}`;
+}
+
+function isValidTagName(tag) {
+    try {
+        gitOut(['check-ref-format', `refs/tags/${tag}`]);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function tagExists(tag) {
+    try {
+        gitOut(['rev-parse', '-q', '--verify', `refs/tags/${tag}`]);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function hasOrigin() {
+    try {
+        gitOut(['remote', 'get-url', 'origin']);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function hasUpstream() {
+    try {
+        gitOut(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+// A merge, rebase, cherry-pick or revert that is part way through
+function operationInProgress() {
+    const markers = [
+        ['MERGE_HEAD', 'merge'],
+        ['rebase-merge', 'rebase'],
+        ['rebase-apply', 'rebase'],
+        ['CHERRY_PICK_HEAD', 'cherry-pick'],
+        ['REVERT_HEAD', 'revert']
+    ];
+    for (const [name, label] of markers) {
+        try {
+            if (fs.existsSync(gitOut(['rev-parse', '--git-path', name]).trim())) return label;
+        } catch {
+        }
+    }
+    return null;
+}
+
+// The most recent tag made for this workspace, or null when it has never been released
+function lastWorkspaceTag(ws) {
+    const prefix = ws.name.replace(/^@/, '');
+    try {
+        return gitOut(['tag', '--list', `${prefix}@*`, '--sort=-version:refname']).split('\n').map(t => t.trim()).filter(Boolean)[0] || null;
+    } catch {
+        return null;
+    }
+}
+
+// True when nothing the next commit would contain differs from the workspace's last tag
+function unchangedSince(ws, tag, opts) {
+    const differs = args => {
+        try {
+            execFileSync('git', ['diff', '--quiet', ...args, tag, '--', ws.dir], {stdio: 'pipe'});
+            return false;
+        } catch {
+            return true;
+        }
+    };
+    const mode = opts.addMode || null;
+
+    if (!mode) return !differs(['--cached']);
+    if (differs([])) return false;
+    if ((mode === 'all' || mode === 'interactive') && gitList(['ls-files', '-o', '--exclude-standard', '-z', '--', ws.dir]).length) return false;
+    return true;
+}
+
+// Summarises changes since the last tag, for the listing
+function changesSince(ws, tag) {
+    if (!unchangedSince(ws, tag, {addMode: null})) return 'changed since tag';
+    if (!unchangedSince(ws, tag, {addMode: 'all'})) return 'unstaged changes only';
+    return 'none since tag';
+}
+
+// Reasons a real run would stop before changing anything
+function workspaceProblems(ws, opts = {}) {
     const problems = [];
+    let detachedReported = false;
 
     try {
         gitOut(['rev-parse', '--verify', '-q', 'HEAD']);
     } catch {
         problems.push('This repo has no commits yet. Make a first commit before using workspace mode.');
+    }
+
+    if (opts.push) {
+        if (!hasOrigin()) {
+            problems.push('No remote repository (origin) is configured, so vnxt cannot push. Add one, or use -dnp to commit without pushing.');
+        } else if (!gitOut(['branch', '--show-current']).trim()) {
+            detachedReported = true;
+            problems.push('HEAD is detached, so there is no branch to push. Switch to a branch, or use -dnp to commit without pushing.');
+        } else if (!hasUpstream()) {
+            problems.push('This branch has no upstream yet. Run git push -u origin <branch> once, or use -dnp to commit without pushing.');
+        }
+    }
+
+    if (!detachedReported && !gitOut(['branch', '--show-current']).trim()) {
+        problems.push('HEAD is detached, so a release commit now would not be on any branch and is easy to lose. Switch to a branch first.');
+    }
+
+    const busy = operationInProgress();
+    if (busy) {
+        problems.push(`A ${busy} is in progress. Finish or abort it before making a release commit.`);
+    }
+
+    if (!opts.customVersion) {
+        const last = lastWorkspaceTag(ws);
+        if (last && unchangedSince(ws, last, opts)) {
+            const unstaged = !opts.addMode && !unchangedSince(ws, last, {addMode: 'all'});
+            problems.push(`No changes in ${ws.dir} since ${last}, so there is nothing to release.${unstaged
+                ? ' You have changes there that are not staged, and without -a they would not be committed. Stage them, or use -a tracked or -a all.'
+                : ' Make a change first, or use -sv to set a version anyway.'}`);
+        }
+    }
+
+    if (opts.addMode === 'patch' || opts.addMode === 'interactive') {
+        const versionFiles = [`${ws.dir}/package.json`, `${ws.dir}/CHANGELOG.md`];
+        const dirty = versionFiles.filter(file => gitOut(['status', '--porcelain', '--', file]).trim());
+        if (dirty.length) {
+            problems.push(`${dirty.join(' and ')} ${dirty.length > 1 ? 'have' : 'has'} uncommitted changes. vnxt stages the version files whole, so they cannot be part of a hand-picked commit. Commit or stash them first, or use -a tracked.`);
+        }
     }
 
     if (fs.existsSync(LOCKFILE)) {
@@ -499,27 +632,69 @@ function workspaceProblems(ws) {
     return problems;
 }
 
-// Flags that have no workspace version yet are refused outright, in a dry run too,
-// so a preview never describes something the real run would turn down.
+// Refuses flags and combinations that workspace mode does not support
 function assertWorkspaceFlagsSupported(opts, targets) {
     const refuse = flag => {
         throw new UserError(`${flag} is not supported in workspace mode yet.`);
     };
 
-    if (opts.generateReleaseNotes) refuse('-r / --release');
-    if (opts.publishToNpm) refuse('--publish');
-    if (opts.explicitPush) refuse('-p / --push (tags and pushing for workspaces are not built yet)');
-    if (opts.promptForStaging) throw new UserError('Workspace mode needs a staging mode: -a all or -a tracked.');
-    if (opts.addMode === 'interactive' || opts.addMode === 'patch') refuse(`-a ${opts.addMode}`);
-
-    if (!opts.dryRun) {
-        if (targets.length > 1) throw new UserError('One workspace at a time for now. Several workspaces in one run are not built yet.');
-        if (!opts.message) throw new UserError('-m is required in workspace mode for now.');
+    if (opts.publishToNpm) {
+        throw new UserError('--publish is not supported in workspace mode, and is not meant to be: apps are deployed as builds and shared packages are used through the workspace links, so nothing is published from here. Use -p to push the commit and tag.');
     }
+    if (opts.promptForStaging) throw new UserError('Workspace mode needs a staging mode: -a all, -a tracked, -a patch or -a interactive.');
+
+    if (targets.length > 1) {
+        if (opts.customVersion) {
+            throw new UserError('-sv sets one exact version, so it cannot be used with several workspaces. Run them one at a time, or leave -sv out.');
+        }
+        if (opts.addMode === 'patch' || opts.addMode === 'interactive') {
+            throw new UserError(`-a ${opts.addMode} chooses changes by hand, so it works with one workspace at a time.`);
+        }
+    }
+
+    if (!opts.dryRun && !opts.message) throw new UserError('-m is required in workspace mode for now.');
+}
+
+// Release notes live inside the workspace: <dir>/release-notes/<name>@<version>.md
+function workspaceReleaseNotesPath(ws, version) {
+    const safe = ws.name.replace(/^@/, '').replace(/\//g, '-');
+    return `${ws.dir}/release-notes/${safe}@${version}.md`;
+}
+
+// Same layout as the single-package release notes, so anything that reads them still can
+function generateWorkspaceReleaseNotes(ws, file, tag, newVersion, message, withChangelog) {
+    log('📋 Generating release notes...', 'cyan');
+
+    const now = new Date();
+    const time = now.toISOString().replace('T', ' ').split('.')[0].split(' ')[1];
+    const date = now.toISOString().split('T')[0];
+
+    let author = '';
+    try { author = gitOut(['config', 'user.name']).trim(); } catch {}
+
+    const notes = `# Release ${tag}
+
+Released: ${date} at ${time} UTC${author ? `\nAuthor: ${author}` : ''}
+
+## Changes
+- ${commitSubject(message)}
+${ws.private ? '' : `
+## Installation
+\`\`\`bash
+npm install ${ws.name}@${newVersion}
+\`\`\`
+`}${withChangelog ? `
+## Full Changelog
+See [CHANGELOG.md](../CHANGELOG.md) for complete version history.
+` : ''}`;
+
+    fs.mkdirSync(path.dirname(file), {recursive: true});
+    fs.writeFileSync(file, notes);
+    log(`   Created: ${file}`);
 }
 
 function bumpAndCommitWorkspace(ws, opts, versionArg) {
-    const problems = workspaceProblems(ws);
+    const problems = workspaceProblems(ws, opts);
     if (problems.length) throw new UserError(problems[0]);
 
     const branch = gitOut(['branch', '--show-current']).trim();
@@ -534,39 +709,94 @@ function bumpAndCommitWorkspace(ws, opts, versionArg) {
     const snapshot = snapshotFiles([manifest, LOCKFILE, `${ws.dir}/CHANGELOG.md`]);
     const plan = buildCommitPlan(ws, opts, hadLockfile);
 
+    let pickedIndex = null;
+    if (plan.pick) {
+        const expected = previewVersion(ws, versionArg);
+        const expectedTag = expected && workspaceTagName(ws, expected);
+        if (expectedTag && tagExists(expectedTag)) {
+            throw new UserError(`The tag ${expectedTag} already exists. Use -sv to choose another version, or delete the old tag if it is stale.`);
+        }
+        pickedIndex = pickChanges(ws, plan);
+    }
+
     let step = 'bump the version';
     let newVersion;
+    let tag;
+    let notesFile = null;
+    const notesDir = `${ws.dir}/release-notes`;
+    const notesDirExisted = fs.existsSync(notesDir);
     try {
         log(`\n🔼 Bumping ${ws.name}...`, 'cyan');
-        // --workspaces-update=false stops npm reinstalling the whole tree just to change a version
         execSync(`npm version ${versionArg} --git-tag-version=false --workspaces-update=false`, {cwd: ws.abs, stdio: quietMode ? 'pipe' : 'inherit'});
         newVersion = readJsonIfExists(path.join(ws.abs, 'package.json')).version;
+        if (snapshot[manifest] !== null) {
+            const written = fs.readFileSync(manifest, 'utf8');
+            const restored = matchLayout(snapshot[manifest], written);
+            if (restored !== written) fs.writeFileSync(manifest, restored);
+        }
 
-        // npm left the lockfile alone, so set this workspace's version in it, and nothing else
         if (hadLockfile) fs.writeFileSync(LOCKFILE, setLockfileVersion(snapshot[LOCKFILE], ws.dir, newVersion));
+
+        tag = workspaceTagName(ws, newVersion);
+        if (!isValidTagName(tag)) throw new UserError(`'${tag}' is not a tag name git accepts.`);
+        if (tagExists(tag)) {
+            throw new UserError(`The tag ${tag} already exists, so the version bump was rolled back. Use -sv to choose another version, or delete the old tag if it is stale.`);
+        }
 
         if (opts.generateChangelog) generateChangelog(newVersion, opts.message, ws.dir);
 
+        if (opts.generateReleaseNotes) {
+            const candidate = workspaceReleaseNotesPath(ws, newVersion);
+            if (fs.existsSync(candidate)) throw new UserError(`${candidate} already exists, so the version bump was rolled back. Delete it or use -sv to choose another version.`);
+            notesFile = candidate;
+            generateWorkspaceReleaseNotes(ws, notesFile, tag, newVersion, opts.message, opts.generateChangelog);
+            plan.stage.push(['add', '--', notesFile]);
+        }
+
         step = 'stage the files';
         log('📦 Staging files...', 'cyan');
-        for (const args of plan.stage) execFileSync('git', args, {stdio: 'pipe'});
+        const stageEnv = pickedIndex ? {...process.env, GIT_INDEX_FILE: pickedIndex} : process.env;
+        for (const args of plan.stage) execFileSync('git', args, {env: stageEnv, stdio: 'pipe'});
 
         step = 'commit';
         log('📝 Committing...', 'cyan');
-        commitWithTemporaryIndex(plan, quietMode);
+        commitWithTemporaryIndex(plan, quietMode, pickedIndex);
     } catch (err) {
+        removeTemporaryIndex(pickedIndex);
+        if (notesFile) {
+            fs.rmSync(notesFile, {force: true});
+            try { execFileSync('git', ['reset', '-q', '--', notesFile], {stdio: 'pipe'}); } catch {}
+            if (!notesDirExisted) { try { fs.rmdirSync(notesDir); } catch {} }
+        }
         restoreFiles(snapshot);
         if (err instanceof UserError) throw err;
         throw new UserError(`Could not ${step}, so the version bump was rolled back. ${err.message}`);
     }
 
-    // Make the real index agree with the new commit for the paths it covered
     execFileSync('git', plan.resetKept, {stdio: 'pipe'});
-    return newVersion;
+
+    log('🏷️  Adding tag annotation...', 'cyan');
+    try {
+        execFileSync('git', ['tag', '-a', tag, '-m', `Version ${newVersion}\n\n${opts.message}`], {stdio: 'pipe'});
+    } catch (err) {
+        throw new UserError(`The commit was made, but the tag ${tag} could not be created: ${err.message}\n   Nothing was pushed. Create the tag by hand with: git tag -a ${tag} -m "Version ${newVersion}"`);
+    }
+
+    let pushed = false;
+    if (opts.push) {
+        log('🚀 Pushing to remote...', 'cyan');
+        try {
+            execFileSync('git', ['push', '--follow-tags'], {stdio: quietMode ? 'pipe' : 'inherit'});
+            pushed = true;
+        } catch (err) {
+            throw new UserError(`The commit and the tag ${tag} were made locally, but the push failed: ${err.message}\n   Fix the cause, then run: git push --follow-tags`);
+        }
+    }
+
+    return { newVersion, tag, pushed };
 }
 
-// The version npm would produce, worked out on a throwaway copy of the manifest.
-// Scripts are ignored so a preview can never run anything from the package.
+// The version npm would produce, worked out on a throwaway copy of the manifest
 function previewVersion(ws, versionArg) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vnxt-preview-'));
     try {
@@ -592,48 +822,66 @@ function printList(items, empty = '(none)') {
     for (const item of items) log(`  ${item}`);
 }
 
-function previewResolved(targets) {
-    log('🔬 DRY RUN MODE - No changes will be made\n', 'yellow');
-    log(`Repo root: ${process.cwd()}`);
-
-    targets.forEach((ws, index) => {
-        log(`\nTarget ${index + 1} of ${targets.length}`, 'cyan');
-        log(`  Workspace: ${ws.name}`);
-        log(`  Directory: ${ws.dir}`);
-        log(`  Version:   ${ws.version || '(none)'}`);
-        log(`  Private:   ${ws.private ? 'yes' : 'no'}`);
-    });
-
-    log('\n✓ Dry run complete. Several workspaces in one run are not built yet, so this only shows which workspaces vnxt resolved.', 'green');
+// Local annotated tags that a push would also send
+function unpushedTags() {
+    try {
+        const out = gitOut(['push', '--follow-tags', '--dry-run', '--porcelain']);
+        return out.split(/\r?\n/)
+            .filter(line => line.startsWith('*\trefs/tags/'))
+            .map(line => line.slice(1).trim().split(':')[0].replace(/^refs\/tags\//, ''))
+            .sort();
+    } catch {
+        return null;
+    }
 }
 
-function previewWorkspace(ws, opts, versionArg) {
+function previewWorkspace(ws, opts, versionArg, part = null) {
     const hadLockfile = fs.existsSync(LOCKFILE);
     const plan = buildCommitPlan(ws, opts, hadLockfile);
     const newVersion = previewVersion(ws, versionArg);
 
-    log('🔬 DRY RUN MODE - No changes will be made\n', 'yellow');
-    log(`Repo root: ${process.cwd()}\n`);
+    if (part) {
+        log(`\n━━ Target ${part.index} of ${part.total} ━━\n`, 'cyan');
+    } else {
+        log('🔬 DRY RUN MODE - No changes will be made\n', 'yellow');
+        log(`Repo root: ${process.cwd()}\n`);
+    }
     log(`Workspace: ${ws.name}`);
     log(`Directory: ${ws.dir}`);
     log(`Version:   ${ws.version || '(none)'} → ${newVersion || '(could not be calculated)'}`);
     log(`Private:   ${ws.private ? 'yes' : 'no'}`);
     log(`Message:   ${opts.message || '(none yet)'}`);
+    const tag = newVersion ? workspaceTagName(ws, newVersion) : null;
+    log(`Tag:       ${tag || '(unknown)'}`);
 
-    for (const problem of workspaceProblems(ws)) {
+    for (const problem of workspaceProblems(ws, opts)) {
         log(`\n⚠️  A real run would stop here: ${problem}`, 'yellow');
+    }
+
+    if (tag && tagExists(tag)) {
+        log(`\n⚠️  A real run would stop here: the tag ${tag} already exists.`, 'yellow');
     }
 
     log('\nWill change:', 'cyan');
     printList([
         `${ws.dir}/package.json`,
         ...(hadLockfile ? [`${LOCKFILE} (this workspace's entry only)`] : []),
-        ...(opts.generateChangelog ? [`${ws.dir}/CHANGELOG.md${fs.existsSync(`${ws.dir}/CHANGELOG.md`) ? '' : ' (new)'}`] : [])
+        ...(opts.generateChangelog ? [`${ws.dir}/CHANGELOG.md${fs.existsSync(`${ws.dir}/CHANGELOG.md`) ? '' : ' (new)'}`] : []),
+        ...(opts.generateReleaseNotes && newVersion ? [`${workspaceReleaseNotesPath(ws, newVersion)} (new)`] : [])
     ]);
+    if (opts.generateReleaseNotes && newVersion && fs.existsSync(workspaceReleaseNotesPath(ws, newVersion))) {
+        log(`\n⚠️  A real run would stop here: ${workspaceReleaseNotesPath(ws, newVersion)} already exists.`, 'yellow');
+    }
 
-    const staging = opts.addMode ? `-a ${opts.addMode}` : 'already staged';
-    log(`\nWill commit from inside ${ws.dir} as well (${staging}):`, 'cyan');
-    printList(filesToStage(ws, opts.addMode));
+    if (plan.pick) {
+        log(`\nYou will choose the changes to commit inside ${ws.dir} (-a ${opts.addMode}) when this is run for real.`, 'cyan');
+        log('Already staged there, and so part of the commit:', 'cyan');
+        printList(filesToStage(ws, opts.addMode));
+    } else {
+        const staging = opts.addMode ? `-a ${opts.addMode}` : 'already staged';
+        log(`\nWill commit from inside ${ws.dir} as well (${staging}):`, 'cyan');
+        printList(filesToStage(ws, opts.addMode));
+    }
 
     const outside = gitList(['diff', '--cached', '--name-only', '-z'])
         .filter(file => file !== LOCKFILE && file !== ws.dir && !file.startsWith(`${ws.dir}/`));
@@ -642,36 +890,180 @@ function previewWorkspace(ws, opts, versionArg) {
 
     const show = args => `git ${args.map(quoteForDisplay).join(' ')}`;
     log('\nCommands, in order:', 'cyan');
+    if (plan.pick) log(`  ${show(plan.pick)}   (first, on a temporary copy of the index; you choose, and choosing nothing stops the run)`);
     log(`  npm version ${versionArg} --git-tag-version=false --workspaces-update=false   (run in ${ws.dir})`);
     if (hadLockfile) log(`  (vnxt sets the version in ${LOCKFILE}'s ${ws.dir} entry itself, so npm installs nothing)`);
-    for (const args of plan.stage) log(`  ${show(args)}`);
+    for (const args of plan.stage) log(`  ${show(args)}${plan.pick ? '   (on that copy)' : ''}`);
+    if (opts.generateReleaseNotes && newVersion) log(`  ${show(['add', '--', workspaceReleaseNotesPath(ws, newVersion)])}${plan.pick ? '   (on that copy)' : ''}`);
     log(`  ${show(plan.resetOthers)}   (on a temporary copy of the index)`);
     log(`  ${show(plan.commit)}   (on that copy; hooks run as usual)`);
     log(`  ${show(plan.resetKept)}`);
+    if (tag) log(`  git tag -a ${quoteForDisplay(tag)} -m "Version ${newVersion}..."`);
+    if (opts.push && !part) log('  git push --follow-tags');
 
-    log('\n✓ Dry run complete. Tags and pushing are not built for workspaces yet.', 'green');
+    if (part) return;
+    previewPushSummary(opts);
+    log('\n✓ Dry run complete. Nothing was changed.', 'green');
 }
 
-function printWorkspaceSummary(ws, newVersion, opts) {
+function previewPushSummary(opts) {
+    log(`\nPush: ${opts.push ? 'yes (-p or workspaceAutoPush), once, after every commit' : 'no (use -p to push)'}`, 'cyan');
+    if (opts.push) {
+        const unpushed = unpushedTags();
+        if (unpushed === null) {
+            log('  (could not ask the remote which tags are not pushed yet)', 'gray');
+        } else {
+            log('  Tags already made locally that this push would also send:');
+            printList(unpushed, '(none)');
+        }
+    }
+}
+
+function printWorkspaceSummary(ws, result, opts) {
+    const { newVersion, tag, pushed } = result;
     log('\n📊 Summary:', 'cyan');
     log('━'.repeat(50), 'gray');
     log(`\n📦 Workspace: ${ws.name} (${ws.dir})`, 'green');
-    log(`📦 Version: ${ws.version} → ${newVersion}`, 'green');
+    log(`📦 Version: ${ws.version || '(none)'} → ${newVersion}`, 'green');
     log(`💬 Message: ${opts.message}`);
     if (opts.generateChangelog) log(`📄 Changelog: Updated (${ws.dir}/CHANGELOG.md)`);
-    log('🏷️  Tag: Not created yet (per-workspace tags are the next step)', 'gray');
-    log('📍 Remote: Not pushed (pushing from workspace mode arrives with the tags)', 'gray');
+    if (opts.generateReleaseNotes) log(`📋 Release notes: Generated (${workspaceReleaseNotesPath(ws, newVersion)})`);
+    log(`🏷️  Tag: ${tag}`);
+    log(pushed ? '📍 Remote: Pushed with tags' : '📍 Remote: Not pushed (use --push to enable)', pushed ? 'green' : 'gray');
     log('━'.repeat(50), 'gray');
     log('\n✅ Version bump complete!\n', 'green');
 }
 
-// What vnxt does in a workspaces repo once it knows which workspaces are meant.
+// Everything that would stop any of the targets, found before the first one is touched
+function preflightMany(targets, opts, versionArg) {
+    const found = new Map();
+    const add = (message, ws) => {
+        if (!found.has(message)) found.set(message, []);
+        found.get(message).push(ws.name);
+    };
+
+    for (const ws of targets) {
+        for (const problem of workspaceProblems(ws, opts)) add(problem, ws);
+
+        const newVersion = previewVersion(ws, versionArg);
+        if (!newVersion) {
+            add('The new version could not be worked out.', ws);
+            continue;
+        }
+        const tag = workspaceTagName(ws, newVersion);
+        if (!isValidTagName(tag)) add(`'${tag}' is not a tag name git accepts.`, ws);
+        else if (tagExists(tag)) add(`The tag ${tag} already exists. Use -sv on its own to choose another version, or delete the old tag if it is stale.`, ws);
+        if (opts.generateReleaseNotes && fs.existsSync(workspaceReleaseNotesPath(ws, newVersion))) {
+            add(`${workspaceReleaseNotesPath(ws, newVersion)} already exists.`, ws);
+        }
+    }
+
+    return [...found].map(([message, names]) => (names.length === targets.length ? message : `[${names.join(', ')}] ${message}`));
+}
+
+function printManySummary(landed, opts, pushed) {
+    log('\n📊 Summary:', 'cyan');
+    log('━'.repeat(50), 'gray');
+    log(`\n💬 Message: ${opts.message}`);
+    for (const { ws, result } of landed) {
+        log(`\n📦 ${ws.name} (${ws.dir}): ${ws.version || '(none)'} → ${result.newVersion}`, 'green');
+        log(`   🏷️  Tag: ${result.tag}`);
+    }
+    log(pushed ? '\n📍 Remote: Pushed with tags' : '\n📍 Remote: Not pushed (use --push to enable)', pushed ? 'green' : 'gray');
+    log('━'.repeat(50), 'gray');
+    log(`\n✅ ${landed.length} workspaces released, one commit and one tag each.\n`, 'green');
+}
+
+// Releases several workspaces: one commit and tag each, then one push
+function runManyWorkspaces(opts, targets, versionArg) {
+    const noVersion = targets.filter(ws => !ws.version);
+    if (noVersion.length) {
+        throw new UserError(`${noVersion.map(ws => ws.name).join(', ')} ${noVersion.length > 1 ? 'have' : 'has'} no version yet, so there is nothing to bump. Set a first version with -sv, one workspace at a time.`);
+    }
+
+    if (opts.dryRun) {
+        log('🔬 DRY RUN MODE - No changes will be made\n', 'yellow');
+        log(`Repo root: ${process.cwd()}\n`);
+        log(`${targets.length} workspaces, one commit and one tag each, in this order:`, 'cyan');
+        printList(targets.map(ws => ws.name));
+        targets.forEach((ws, index) => previewWorkspace(ws, opts, versionArg, { index: index + 1, total: targets.length }));
+        previewPushSummary(opts);
+        log('\n✓ Dry run complete. Nothing was changed.', 'green');
+        return;
+    }
+
+    const problems = preflightMany(targets, opts, versionArg);
+    if (problems.length) {
+        throw new UserError(`Nothing was changed. Fix ${problems.length > 1 ? 'these' : 'this'} first:\n${problems.map(p => `   - ${p}`).join('\n')}`);
+    }
+
+    const landed = [];
+    for (const ws of targets) {
+        try {
+            landed.push({ ws, result: bumpAndCommitWorkspace(ws, { ...opts, push: false }, versionArg) });
+        } catch (err) {
+            const notStarted = targets.slice(landed.length + 1).map(t => t.name);
+            const lines = [
+                `Stopped at ${ws.name}: ${err.message}`,
+                `   Landed before this: ${landed.length ? landed.map(l => l.result.tag).join(', ') : 'nothing'}.`,
+                `   Not started: ${notStarted.length ? notStarted.join(', ') : 'nothing'}.`,
+                '   Nothing was pushed.'
+            ];
+            if (notStarted.length) {
+                lines.push(`   After dealing with ${ws.name} as described above, run the rest with: vx -w ${notStarted.join(',')} -m "<the same message>"  (and the same flags)`);
+            }
+            throw new UserError(lines.join('\n'));
+        }
+    }
+
+    let pushed = false;
+    if (opts.push) {
+        log('\n🚀 Pushing to remote...', 'cyan');
+        try {
+            execFileSync('git', ['push', '--follow-tags'], {stdio: quietMode ? 'pipe' : 'inherit'});
+            pushed = true;
+        } catch (err) {
+            throw new UserError(`All ${landed.length} commits and tags were made locally (${landed.map(l => l.result.tag).join(', ')}), but the push failed: ${err.message}\n   Fix the cause, then run: git push --follow-tags`);
+        }
+    }
+
+    printManySummary(landed, opts, pushed);
+}
+
+// Prints the workspaces and their state, changing nothing
+function listWorkspaces() {
+    const root = process.cwd();
+    const rootPackage = readJsonIfExists(path.join(root, 'package.json'));
+    if (!rootPackage || !declaresWorkspaces(rootPackage)) {
+        throw new UserError("This repo's root package.json does not declare workspaces, so there is nothing to list.");
+    }
+    const workspaces = readWorkspaces(root, rootPackage);
+    if (!workspaces.length) throw new UserError('The root package.json declares workspaces, but none of them were found on disk.');
+
+    const rows = workspaces.map(ws => {
+        const tag = lastWorkspaceTag(ws);
+        let changes = 'never released';
+        if (tag) changes = changesSince(ws, tag);
+        return [ws.name, ws.dir, ws.version || '(none)', ws.private ? 'yes' : 'no', tag || '-', changes];
+    });
+    const head = ['NAME', 'FOLDER', 'VERSION', 'PRIVATE', 'LATEST TAG', 'CHANGES'];
+    const widths = head.map((h, i) => Math.max(h.length, ...rows.map(r => r[i].length)));
+    const line = cells => '  ' + cells.map((c, i) => c.padEnd(widths[i])).join('  ').trimEnd();
+
+    log(`Workspaces in ${root}:\n`, 'cyan');
+    log(line(head), 'gray');
+    for (const row of rows) log(line(row));
+    log('\nChoose one or more with -w, for example: vx -w ' + workspaces[0].name + ' -m "fix: ..."', 'gray');
+}
+
+// What vnxt does in a workspaces repo once it knows which workspaces are meant
 function runWorkspaceMode(opts, targets) {
     assertWorkspaceFlagsSupported(opts, targets);
 
-    if (targets.length > 1) {
-        previewResolved(targets);
-        return;
+    const pushByConfig = config.workspaceAutoPush === true;
+    opts = {...opts, push: !opts.noPush && (opts.explicitPush || pushByConfig)};
+    if (config.autoPush && !opts.push && !opts.noPush) {
+        log('ℹ️  autoPush is ignored in workspace mode. Add -p to push, or set workspaceAutoPush to true in .vnxtrc.json.', 'cyan');
     }
 
     const ws = targets[0];
@@ -691,28 +1083,31 @@ function runWorkspaceMode(opts, targets) {
         throw new UserError(`'${versionArg}' is not a version npm can use.`);
     }
 
+    if (targets.length > 1) {
+        runManyWorkspaces(opts, targets, versionArg);
+        return;
+    }
+
+    if (!ws.version && !opts.customVersion) {
+        throw new UserError(`${ws.name} has no version yet, so there is nothing to bump. Set its first version with -sv, for example: -sv 1.0.0`);
+    }
+
     if (opts.dryRun) {
         previewWorkspace(ws, opts, versionArg);
         return;
     }
 
-    const newVersion = bumpAndCommitWorkspace(ws, opts, versionArg);
-    printWorkspaceSummary(ws, newVersion, opts);
+    const result = bumpAndCommitWorkspace(ws, opts, versionArg);
+    printWorkspaceSummary(ws, result, opts);
 }
 
-// =============================================================================
-// Handle Quick Flags (exit immediately)
-// =============================================================================
-
 function handleQuickFlags() {
-    // -vv / --vnxt-version: show vnxt's own installed version
     if (args.includes('--vnxt-version') || args.includes('-vv')) {
         const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
         console.log(`vnxt v${pkg.version}`);
         process.exit(0);
     }
 
-    // -gv / --get-version: show the current project's version
     if (args.includes('--get-version') || args.includes('-gv')) {
         if (!fs.existsSync('./package.json')) {
             console.error('❌ No package.json found in current directory.');
@@ -723,16 +1118,11 @@ function handleQuickFlags() {
         process.exit(0);
     }
 
-    // -h / --help
     if (hasFlag('--help', '-h')) {
         printHelp();
         process.exit(0);
     }
 }
-
-// =============================================================================
-// Parse Args
-// =============================================================================
 
 function parseArgs() {
     if (args.includes('--quiet') || args.includes('-q')) {
@@ -777,20 +1167,12 @@ function parseArgs() {
     };
 }
 
-// =============================================================================
-// Interactive Prompt Helper
-// =============================================================================
-
 async function prompt(question) {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     return new Promise(resolve => {
         rl.question(question, answer => { rl.close(); resolve(answer); });
     });
 }
-
-// =============================================================================
-// Interactive Mode
-// =============================================================================
 
 async function runInteractiveMode(opts) {
     log('🤔 Interactive mode\n', 'cyan');
@@ -824,10 +1206,6 @@ async function runInteractiveMode(opts) {
     log('');
 }
 
-// =============================================================================
-// Detect Version Type
-// =============================================================================
-
 function detectVersionType(message, currentType) {
     const rules = [
         { prefixes: ['major:', 'MAJOR:'],  type: 'major', label: 'major version bump' },
@@ -845,7 +1223,6 @@ function detectVersionType(message, currentType) {
         }
     }
 
-    // Special case: BREAKING anywhere in message
     if (message.includes('BREAKING')) {
         log('📝 Auto-detected: major version bump (breaking change)', 'cyan');
         return 'major';
@@ -854,14 +1231,9 @@ function detectVersionType(message, currentType) {
     return currentType;
 }
 
-// =============================================================================
-// Pre-flight Checks
-// =============================================================================
-
 async function runPreflightChecks(opts) {
     log('\n🔍 Running pre-flight checks...\n', 'cyan');
 
-    // Staging prompt if requested
     if ((config.requireCleanWorkingDir && !opts.addMode) || opts.promptForStaging) {
         const status = execSync('git status --porcelain --untracked-files=no').toString().trim();
         if (status || opts.promptForStaging) {
@@ -889,13 +1261,11 @@ async function runPreflightChecks(opts) {
         }
     }
 
-    // Branch check
     const branch = execSync('git branch --show-current').toString().trim();
     if (branch !== 'main' && branch !== 'master') {
         log(`⚠️  Warning: You're on branch '${branch}', not main/master`, 'yellow');
     }
 
-    // Remote check
     try {
         execSync('git remote get-url origin', {stdio: 'pipe'});
     } catch {
@@ -909,10 +1279,6 @@ async function runPreflightChecks(opts) {
     log('✅ Pre-flight checks passed\n', 'green');
     return branch;
 }
-
-// =============================================================================
-// Dry Run
-// =============================================================================
 
 function runDryRun(opts) {
     log('🔬 DRY RUN MODE - No changes will be made\n', 'yellow');
@@ -939,10 +1305,6 @@ function runDryRun(opts) {
     process.exit(0);
 }
 
-// =============================================================================
-// Stage Files
-// =============================================================================
-
 function stageFiles(addMode) {
     log('📦 Staging files...', 'cyan');
     const modeCommands = {
@@ -953,10 +1315,6 @@ function stageFiles(addMode) {
     };
     execSync(modeCommands[addMode], {stdio: 'inherit'});
 }
-
-// =============================================================================
-// Bump Version
-// =============================================================================
 
 function bumpVersion(opts) {
     log('\n🔼 Bumping version...', 'cyan');
@@ -972,12 +1330,7 @@ function bumpVersion(opts) {
     return { oldVersion, newVersion, packageJson };
 }
 
-// =============================================================================
-// Commit and Tag
-// =============================================================================
-
-// Runs once every file (version, changelog, release notes) has been written and
-// staged, so there is a single commit and the tag lands on that final commit.
+// Commits and tags once every file has been written
 function commitAndTag(opts, newVersion) {
     execSync('git add package.json', {stdio: 'pipe'});
     if (fs.existsSync('package-lock.json')) {
@@ -985,15 +1338,10 @@ function commitAndTag(opts, newVersion) {
     }
     execFileSync('git', ['commit', '-m', opts.message], {stdio: quietMode ? 'pipe' : 'inherit'});
 
-    // Create annotated tag
     log('🏷️  Adding tag annotation...', 'cyan');
     const tagMessage = `Version ${newVersion}\n\n${opts.message}`;
     execFileSync('git', ['tag', '-a', `${config.tagPrefix}${newVersion}`, '-m', tagMessage], {stdio: 'pipe'});
 }
-
-// =============================================================================
-// Generate Changelog
-// =============================================================================
 
 function generateChangelog(newVersion, message, dir = '') {
     log('📄 Updating CHANGELOG.md...', 'cyan');
@@ -1016,10 +1364,6 @@ function generateChangelog(newVersion, message, dir = '') {
     execFileSync('git', ['add', '--', file], {stdio: 'pipe'});
 }
 
-// =============================================================================
-// Generate Release Notes
-// =============================================================================
-
 // Mirrors git's own idea of a subject: the first paragraph, joined onto one line
 function commitSubject(message) {
     return message.split(/\r?\n\r?\n/)[0].replace(/\s*\r?\n\s*/g, ' ').trim();
@@ -1035,7 +1379,6 @@ function generateReleaseNotes(newVersion, message, context, packageJson, isPubli
     let author = '';
     try { author = execSync('git config user.name', {stdio: 'pipe'}).toString().trim(); } catch {}
 
-    // If publishing, gather all commits since the last publish/v* tag
     let changes = message;
     if (isPublish) {
         try {
@@ -1045,7 +1388,6 @@ function generateReleaseNotes(newVersion, message, context, packageJson, isPubli
             ).toString().trim().split('\n').filter(Boolean)[0];
 
             if (lastPublishTag) {
-                // The commit for this release does not exist yet, so its subject is added by hand
                 const earlier = execSync(
                     `git log ${lastPublishTag}..HEAD --pretty=format:"- %s"`,
                     {stdio: 'pipe'}
@@ -1053,7 +1395,6 @@ function generateReleaseNotes(newVersion, message, context, packageJson, isPubli
                 changes = [`- ${commitSubject(message)}`, earlier].filter(Boolean).join('\n');
             }
         } catch {
-            // Fall back to current message if git log fails
         }
     }
 
@@ -1083,9 +1424,6 @@ See [CHANGELOG.md](../CHANGELOG.md) for complete version history.
     execSync(`git add ${filename}`, {stdio: 'pipe'});
 }
 
-// =============================================================================
-// Push to Remote
-// =============================================================================
 
 function pushToRemote(opts, newVersion) {
     log('🚀 Pushing to remote...', 'cyan');
@@ -1098,10 +1436,6 @@ function pushToRemote(opts, newVersion) {
         execSync(`git push origin ${publishTag}`, {stdio: quietMode ? 'pipe' : 'inherit'});
     }
 }
-
-// =============================================================================
-// Print Summary
-// =============================================================================
 
 function printSummary(opts, oldVersion, newVersion, branch) {
     log('\n📊 Summary:', 'cyan');
@@ -1129,17 +1463,12 @@ function printSummary(opts, oldVersion, newVersion, branch) {
             const diff = execSync('git diff HEAD~1 --stat').toString();
             console.log(diff);
         } catch {
-            // No previous commit to diff against
         }
     }
 
     log('━'.repeat(50), 'gray');
     log('\n✅ Version bump complete!\n', 'green');
 }
-
-// =============================================================================
-// Help
-// =============================================================================
 
 function printHelp() {
     console.log(`
@@ -1163,8 +1492,12 @@ Options:
   -a, --all [mode]         Stage files before versioning
                            Modes: tracked (default), all, interactive (i), patch (p)
                            If no mode specified, prompts interactively
-  -w, --workspace <w>      Workspace to version in an npm workspaces repo (name or folder).
-                           One at a time for now, and no tags or pushing yet
+  -w, --workspace <w>      Workspace(s) to version in an npm workspaces repo (name or folder).
+                           Several: -w a,b or -w a -w b. One commit and one tag each,
+                           tags are <name>@<version>. -sv, -a patch and -a interactive
+                           need a single workspace.
+  -lw, --list-workspaces   List the workspaces, their versions, latest tags and whether
+                           they have changed since. Changes nothing.
   -r, --release            Generate release notes file (saved to release-notes/)
   -q, --quiet              Minimal output (errors only)
   -h, --help               Show this help message
@@ -1209,25 +1542,23 @@ Examples:
 `);
 }
 
-// =============================================================================
-// Main
-// =============================================================================
-
 async function main() {
     try {
         handleQuickFlags();
 
-        // Work from the repo root, wherever vnxt was started
         const location = enterRepoRoot();
         config = loadConfig();
 
-        // Git repo check
         if (!fs.existsSync('.git')) {
             logError('❌ Not a git repository. Run `git init` first.');
             process.exit(1);
         }
 
-        // Say which workspace is meant, or learn that this is a plain repo
+        if (hasFlag('--list-workspaces', '-lw')) {
+            listWorkspaces();
+            return;
+        }
+
         const targets = resolveTargets({
             root: process.cwd(),
             startDir: location.startDir,
@@ -1242,23 +1573,19 @@ async function main() {
             return;
         }
 
-        // Interactive mode if no message provided
         if (!opts.message) {
             await runInteractiveMode(opts);
         }
 
-        // Auto-detect version type from commit message
         if (!opts.customVersion && !getFlag('--type', '-t')) {
             opts.type = detectVersionType(opts.message, opts.type);
         }
 
-        // Validate version type
         if (!opts.customVersion && !['patch', 'minor', 'major'].includes(opts.type)) {
             logError('Error: Version type must be patch, minor, or major');
             process.exit(1);
         }
 
-        // Release notes context prompt
         let releaseNotesContext = '';
         if (!opts.generateReleaseNotes && opts.publishToNpm) {
             opts.generateReleaseNotes = true;
@@ -1288,7 +1615,6 @@ async function main() {
         if (opts.push)                 pushToRemote(opts, newVersion);
 
         printSummary(opts, oldVersion, newVersion, branch);
-
     } catch (error) {
         logError('\n❌ Error: ' + error.message);
         process.exit(1);
@@ -1301,8 +1627,10 @@ module.exports = {
     parseSelectors,
     collectWorkspaceSelectors,
     setLockfileVersion,
+    workspaceTagName,
     resolveTargets,
-    inferTarget
+    inferTarget,
+    matchLayout
 };
 
 if (require.main === module) {

@@ -1,3 +1,4 @@
+<!-- README.md -->
 <p>
   <img src="./docs/logos/vnxt_light_logo.png" alt="vnxt logo" width="200">
 </p>
@@ -18,6 +19,7 @@ A lightweight CLI tool for automated version bumping with changelog generation a
 - 💬 Interactive mode when no arguments provided
 - 🎨 Colored terminal output for better readability
 - 🤫 Quiet mode for CI/CD environments
+- 🗂️ Monorepo support for npm workspaces: one commit and one tag per workspace
 - 📦 Automated npm publishing via GitHub Actions Trusted Publishing
 
 ## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Installation
@@ -113,6 +115,8 @@ All options work with both `vnxt` and `vx`:
 -d, --dry-run            Show what would happen without making changes
 -a, --all [mode]         Stage files before versioning (prompts if no mode)
                          Modes: tracked, all, interactive (i), patch (p)
+-w, --workspace <name>   Release one or more npm workspaces (name or folder, repeatable)
+-lw, --list-workspaces   List the workspaces in this repo and what has changed in each
 -r, --release            Generate release notes file (saved to release-notes/)
 -q, --quiet              Minimal output (errors only)
 -h, --help               Show help message
@@ -321,7 +325,9 @@ Control the prefix used for git tags via `.vnxtrc.json`:
 **Options:**
 - `"v"` → `v1.8.0` (default)
 - `""` → `1.8.0` (no prefix)
-- `"release-"` → `release-1.8.0` (useful in monorepos)
+- `"release-"` → `release-1.8.0`
+
+`tagPrefix` does not apply to workspace tags. See [Monorepos](#monorepos-npm-workspaces).
 
 ### Complete Workflow Example
 
@@ -336,6 +342,65 @@ vx -m "feat: add new API endpoint" -d
 # Execute with changelog, release notes, and push
 vx -m "feat: add new API endpoint" -c -r -p
 ```
+
+## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Monorepos (npm workspaces)
+
+If the root `package.json` declares `workspaces`, vnxt switches to workspace mode. Each workspace is versioned, committed and tagged on its own, because one commit per thing that changed keeps the history readable.
+
+### Choosing what to release
+
+**Bash/PowerShell:**
+```bash
+vx -lw                                       # list workspaces, versions, latest tags and pending changes
+vx -w app-one -m "fix: totals"         # by package name
+vx -w apps/app-one -m "fix: totals"    # or by folder
+vx -m "fix: totals"                          # from inside a workspace folder, that workspace is used
+vx -w app-one -w app-two -m "chore: bump deps"   # several at once (app-one,app-two also works)
+```
+
+Run from the repo root with no `-w`, vnxt stops and lists the workspaces rather than guessing. It never versions the root package itself.
+
+### What a release does
+
+For each workspace vnxt:
+
+- bumps the version in that workspace's `package.json` and nothing else in it (line endings and the final newline are left as they were)
+- updates the matching entry in the root `package-lock.json`, without running `npm install`
+- writes `CHANGELOG.md` inside the workspace folder (unless `autoChangelog` is off)
+- makes one commit containing that workspace's folder and the lockfile, and nothing outside them
+- creates an annotated tag named `<name>@<version>`, with the leading `@` of a scope dropped, so `@acme/ui` 1.2.0 becomes `acme/ui@1.2.0`
+
+Anything you have staged elsewhere in the repo is left staged and is not committed. With several workspaces you get one commit and one tag each, then a single push at the end. If one fails, vnxt stops, rolls that workspace back and tells you which ones were already done.
+
+### Staging
+
+`-a tracked`, `-a all`, `-a patch` and `-a interactive` work as usual, but only inside the chosen workspace's folder. Without `-a`, vnxt commits what you have already staged there. `-a patch` and `-a interactive` need exactly one workspace, because you are picking changes by hand.
+
+### Safety checks
+
+vnxt refuses to continue, before changing anything, when:
+
+- there have been no changes in the workspace since its last tag (`-sv` is the deliberate way past this)
+- the tag it would create already exists
+- a merge, rebase, cherry-pick or similar is in progress
+- HEAD is detached
+- you asked to push and there is no remote or upstream
+
+A workspace with no version yet needs `-sv` to give it one, for example `-sv 1.0.0`. `-sv` sets one exact version, so it cannot be combined with several workspaces.
+
+### Release notes
+
+`-r` writes notes to `<workspace>/release-notes/<name>@<version>.md`. The install line is left out for `private` workspaces.
+
+### Pushing
+
+Workspace mode pushes only when you pass `-p`. `autoPush` is ignored here, because it was written for single-package repos and would otherwise send several tags at once. If you do want automatic pushes, set `workspaceAutoPush` to `true` in `.vnxtrc.json`. `-dnp` always wins.
+
+A push uses `--follow-tags`, so any annotated tags you made earlier and never pushed go up too. The dry run lists them.
+
+### Publishing
+
+`--publish` is refused in workspace mode. Apps are deployed as builds, and shared packages are used through the workspace links, so there is nothing to publish.
 
 ## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Configuration
 
@@ -359,7 +424,8 @@ Create a `.vnxtrc.json` file in your project root to set defaults:
 | `autoChangelog` | boolean | `true` | Automatically update CHANGELOG.md on every bump |
 | `defaultType` | string | `"patch"` | Default version bump type if not auto-detected |
 | `requireCleanWorkingDir` | boolean | `false` | Require clean git working directory before bumping |
-| `autoPush` | boolean | `true` | Automatically push to remote after bumping |
+| `autoPush` | boolean | `true` | Automatically push to remote after bumping. Ignored in workspace mode |
+| `workspaceAutoPush` | boolean | `false` | Push automatically after a workspace release. Only a literal `true` turns it on |
 | `defaultStageMode` | string | `"tracked"` | Default staging mode when using `-a` flag |
 | `tagPrefix` | string | `"v"` | Prefix for git tags (e.g., "v1.2.3") |
 | `colors` | boolean | `true` | Enable colored terminal output |
@@ -507,7 +573,7 @@ npm config get prefix
 
 ## <img src="./docs/logos/caret-38x38.png" width="24" align="center"> Requirements
 
-- Node.js 12.x or higher
+- Node.js 14.x or higher
 - npm 6.x or higher
 - Git installed and configured
 

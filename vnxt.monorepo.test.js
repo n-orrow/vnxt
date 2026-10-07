@@ -1,13 +1,4 @@
 // vnxt.monorepo.test.js
-//
-// Integration tests for vnxt's repo root and workspace handling: a fixture
-// builder for a stand-in monorepo, and tests that run the real command line tool
-// against copies of it.
-//
-// Fixtures live under the OS temp folder, not next to this file, so they cannot
-// collide with the test-* folders that vnxt.test.js creates. Nothing here
-// pushes anywhere except to a bare repository inside the same temp folder.
-
 const { spawnSync, execFileSync, execSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
@@ -21,10 +12,6 @@ let tmpRoot;
 let hooksDir;
 let templateDir;
 let counter = 0;
-
-// =============================================================================
-// Helpers
-// =============================================================================
 
 function git(args, cwd) {
     return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: 'pipe' }).trim();
@@ -48,8 +35,7 @@ function writeFile(file, content) {
     fs.writeFileSync(file, content);
 }
 
-// Repo-local config beats the user's global config, so signing, hooks and
-// line-ending settings on the machine running the tests cannot change results.
+// Repo-local git config, so the machine's own settings cannot affect tests
 function isolateGit(repoDir) {
     const settings = [
         ['user.name', 'Fixture User'],
@@ -66,13 +52,12 @@ function isolateGit(repoDir) {
     }
 }
 
-// Runs vnxt without a shell, so quoting is identical on Windows and Linux.
-// Never throws on a non-zero exit: the tests want to look at the exit code.
-function vx(args, cwd) {
+// Runs vnxt without a shell, so quoting is identical on Windows and Linux
+function vx(args, cwd, input = '\n\n\n\n\n') {
     const result = spawnSync(process.execPath, [vnxtPath, ...args], {
         cwd,
         encoding: 'utf8',
-        input: '\n\n\n\n\n' // answers any prompt with Enter
+        input
     });
     const plain = text => (text || '').replace(/\x1b\[[0-9;]*m/g, '');
     return {
@@ -87,14 +72,13 @@ function versionOf(repoDir, dir) {
     return readJson(path.join(repoDir, dir, 'package.json')).version;
 }
 
-// git status --porcelain without the trim that git() applies, which would eat the
-// leading space of ' M path'.
+// git status --porcelain without trimming the leading space
 function statusOf(repoDir) {
     return execFileSync('git', ['status', '--porcelain'], { cwd: repoDir, encoding: 'utf8', stdio: 'pipe' })
         .replace(/\r?\n$/, '');
 }
 
-// Everything a refused or preview-only run must leave exactly as it found it.
+// Everything a refused or preview-only run must leave untouched
 function snapshot(repoDir) {
     return {
         head: git(['rev-parse', 'HEAD'], repoDir),
@@ -103,7 +87,7 @@ function snapshot(repoDir) {
     };
 }
 
-// Points the repo at a hooks folder holding one hook. Hooks run through Git's own sh.
+// Points the repo at a hooks folder holding one hook
 function installHook(repoDir, name, body) {
     const dir = path.join(tmpRoot, `hooks-${++counter}`);
     fs.mkdirSync(dir, { recursive: true });
@@ -113,7 +97,7 @@ function installHook(repoDir, name, body) {
     git(['config', 'core.hooksPath', dir.replace(/\\/g, '/')], repoDir);
 }
 
-// Gives a fixture repo a local bare remote, and returns the remote's path.
+// Gives a fixture repo a local bare remote, and returns the remote's path
 function addRemote(repoDir) {
     const remote = path.join(tmpRoot, `remote-${++counter}.git`);
     fs.mkdirSync(remote);
@@ -123,17 +107,12 @@ function addRemote(repoDir) {
     return remote;
 }
 
-// Files touched by the most recent commit, with forward slashes.
+// Files touched by the most recent commit, with forward slashes
 function committedFiles(cwd) {
     return lines(git(['show', '--name-only', '--format=', 'HEAD'], cwd));
 }
 
-// =============================================================================
-// Fixtures
-// =============================================================================
-
-// Stand-in monorepo: two apps, three source-only shared packages, one root
-// lockfile, no version on the root. Built once, then copied for every test.
+// Stand-in monorepo: two apps and three shared packages
 function buildTemplate() {
     templateDir = path.join(tmpRoot, 'template');
     fs.mkdirSync(templateDir, { recursive: true });
@@ -173,13 +152,11 @@ function buildTemplate() {
 
     writeFile(path.join(templateDir, '.gitignore'), 'node_modules\n');
 
-    // Workspace links only, so no registry access is needed.
     execSync('npm install --offline --no-audit --no-fund --ignore-scripts', {
         cwd: templateDir,
         stdio: 'pipe'
     });
 
-    // Drop the symlinked node_modules so the per-test copies stay plain files.
     fs.rmSync(path.join(templateDir, 'node_modules'), { recursive: true, force: true });
 
     git(['init', '-q', '-b', 'main'], templateDir);
@@ -194,7 +171,7 @@ function freshWorkspace() {
     return dir;
 }
 
-// A plain single-package repo with a local bare remote, for the tag tests.
+// A plain single-package repo with a local bare remote, for the tag tests
 function freshSingleWithRemote() {
     const id = ++counter;
     const remote = path.join(tmpRoot, `remote-${id}.git`);
@@ -230,10 +207,6 @@ afterAll(() => {
     }
 });
 
-// =============================================================================
-// Fixture sanity (normal tests: these must always pass)
-// =============================================================================
-
 describe('fixture sanity', () => {
     test('vnxt runs and reports its own version', () => {
         const res = vx(['-vv'], tmpRoot);
@@ -263,10 +236,6 @@ describe('fixture sanity', () => {
         expect(readJson(path.join(ws, 'apps', 'app-two', 'package.json')).version).toBe('0.2.6');
     });
 });
-
-// =============================================================================
-// Repo root discovery
-// =============================================================================
 
 describe('repo root discovery', () => {
     test('works from a subfolder of a single-package repo, using the root files and config', () => {
@@ -325,10 +294,6 @@ describe('repo root discovery', () => {
         expect(res.stderr).toContain('Not a git repository');
     });
 });
-
-// =============================================================================
-// Workspace selection (-w)
-// =============================================================================
 
 describe('workspace selection (-w)', () => {
     test('refuses from the repo root without a selector, and lists the workspaces', () => {
@@ -442,10 +407,6 @@ describe('workspace selection (-w)', () => {
         expect(res.stdout).not.toContain('Target 1 of');
     });
 });
-
-// =============================================================================
-// Workspace commit (-w)
-// =============================================================================
 
 describe('workspace commit (-w)', () => {
     const sorted = list => [...list].sort();
@@ -585,24 +546,345 @@ describe('workspace commit (-w)', () => {
         expect(res.stdout.trim()).toBe('');
         expect(versionOf(ws, 'apps/app-one')).toBe('0.1.2');
     });
-
-    test('with the default autoPush on, a real run commits but never pushes', () => {
-        const ws = freshWorkspace();
-        const remote = addRemote(ws);
-        const remoteHead = git(['rev-parse', 'refs/heads/main'], remote);
-
-        const res = vx(['-m', 'fix: stays local', '-w', 'app-one'], ws);
-
-        expect(res.status).toBe(0);
-        expect(res.stdout).toContain('Not pushed');
-        expect(git(['rev-parse', 'refs/heads/main'], remote)).toBe(remoteHead);
-        expect(git(['log', '-1', '--format=%s'], ws)).toBe('fix: stays local');
-    });
 });
 
-// =============================================================================
-// Workspace commit: hooks
-// =============================================================================
+describe('workspace tags and pushing', () => {
+    const remoteHas = (repoDir, tag) => git(['ls-remote', '--tags', 'origin', tag], repoDir) !== '';
+    const remoteMain = remote => git(['rev-parse', 'refs/heads/main'], remote);
+
+    test('tags the commit <name>@<version>, annotated, on the final commit', () => {
+        const ws = freshWorkspace();
+
+        const res = vx(['-m', 'fix: tagged', '-w', 'app-one', '-dnp'], ws);
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('Tag: app-one@0.1.2');
+        expect(git(['tag'], ws)).toBe('app-one@0.1.2');
+        expect(git(['cat-file', '-t', 'refs/tags/app-one@0.1.2'], ws)).toBe('tag');
+        expect(git(['rev-parse', 'app-one@0.1.2^{commit}'], ws)).toBe(git(['rev-parse', 'HEAD'], ws));
+        const annotation = git(['tag', '-l', '--format=%(contents)', 'app-one@0.1.2'], ws);
+        expect(annotation).toContain('Version 0.1.2');
+        expect(annotation).toContain('fix: tagged');
+    });
+
+    test('drops the leading @ of a scoped name in the tag', () => {
+        const ws = freshWorkspace();
+
+        const res = vx(['-m', 'fix: scoped', '-w', '@fixture/shared-theme', '-dnp'], ws);
+
+        expect(res.status).toBe(0);
+        expect(git(['tag'], ws)).toBe('fixture/shared-theme@0.0.1');
+        expect(git(['rev-parse', 'fixture/shared-theme@0.0.1^{commit}'], ws)).toBe(git(['rev-parse', 'HEAD'], ws));
+    });
+
+    test('two workspaces at the same version no longer collide', () => {
+        const ws = freshWorkspace();
+        const manifestPath = path.join(ws, 'apps', 'app-two', 'package.json');
+        writeJson(manifestPath, { ...readJson(manifestPath), version: '0.1.1' });
+        git(['add', '-A'], ws);
+        git(['commit', '-q', '-m', 'line the versions up'], ws);
+
+        expect(vx(['-m', 'fix: one', '-w', 'app-one', '-dnp'], ws).status).toBe(0);
+        expect(vx(['-m', 'fix: two', '-w', 'app-two', '-dnp'], ws).status).toBe(0);
+
+        expect(lines(git(['tag'], ws)).sort()).toEqual(['app-one@0.1.2', 'app-two@0.1.2']);
+    });
+
+    test('tagPrefix is ignored in workspace mode', () => {
+        const ws = freshWorkspace();
+        writeFile(path.join(ws, '.vnxtrc.json'), JSON.stringify({ tagPrefix: 'rel-' }, null, 2));
+        git(['add', '.vnxtrc.json'], ws);
+        git(['commit', '-q', '-m', 'add config'], ws);
+
+        vx(['-m', 'fix: prefix', '-w', 'app-one', '-dnp'], ws);
+
+        expect(git(['tag'], ws)).toBe('app-one@0.1.2');
+    });
+
+    test('a tag that already exists is caught before committing, and everything is rolled back', () => {
+        const ws = freshWorkspace();
+        git(['tag', '-a', 'app-one@0.1.2', '-m', 'an old tag'], ws);
+        fs.appendFileSync(path.join(ws, 'apps', 'app-one', 'src', 'main.js'), '// a change since the old tag\n');
+        git(['add', 'apps/app-one/src/main.js'], ws);
+        const before = snapshot(ws);
+
+        const res = vx(['-m', 'fix: clash', '-w', 'app-one', '-dnp'], ws);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('app-one@0.1.2 already exists');
+        expect(res.stderr).toContain('rolled back');
+        expect(snapshot(ws)).toEqual(before);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.1');
+        expect(fs.existsSync(path.join(ws, 'apps', 'app-one', 'CHANGELOG.md'))).toBe(false);
+    });
+
+    test('-p pushes the commit and the tag', () => {
+        const ws = freshWorkspace();
+        const remote = addRemote(ws);
+
+        const res = vx(['-m', 'fix: pushed', '-w', 'app-one', '-p'], ws);
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('Pushed with tags');
+        expect(remoteMain(remote)).toBe(git(['rev-parse', 'HEAD'], ws));
+        expect(remoteHas(ws, 'app-one@0.1.2')).toBe(true);
+    });
+
+    test('autoPush in the config does not push in workspace mode, and the run says so', () => {
+        const ws = freshWorkspace();
+        const remote = addRemote(ws);
+        const remoteBefore = remoteMain(remote);
+
+        const res = vx(['-m', 'fix: held', '-w', 'app-one'], ws);
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('autoPush is ignored in workspace mode');
+        expect(remoteMain(remote)).toBe(remoteBefore);
+        expect(remoteHas(ws, 'app-one@0.1.2')).toBe(false);
+        expect(git(['tag'], ws)).toBe('app-one@0.1.2');
+        expect(res.stdout).not.toContain('Pushed with tags');
+    });
+
+    test('-p still pushes when the config has autoPush on, and the note is not shown', () => {
+        const ws = freshWorkspace();
+        const remote = addRemote(ws);
+
+        const res = vx(['-m', 'fix: sent', '-w', 'app-one', '-p'], ws);
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).not.toContain('autoPush is ignored');
+        expect(remoteMain(remote)).toBe(git(['rev-parse', 'HEAD'], ws));
+        expect(remoteHas(ws, 'app-one@0.1.2')).toBe(true);
+    });
+
+    test('-dnp and autoPush: false both stay quiet about autoPush', () => {
+        const flagged = freshWorkspace();
+        expect(vx(['-m', 'fix: a', '-w', 'app-one', '-dnp'], flagged).stdout).not.toContain('autoPush is ignored');
+
+        const off = freshWorkspace();
+        writeJson(path.join(off, '.vnxtrc.json'), {autoPush: false});
+        git(['add', '.vnxtrc.json'], off);
+        git(['commit', '-q', '-m', 'config'], off);
+        expect(vx(['-m', 'fix: b', '-w', 'app-one'], off).stdout).not.toContain('autoPush is ignored');
+    });
+
+    test('several workspaces with autoPush on make their commits and tags but push nothing', () => {
+        const ws = freshWorkspace();
+        const remote = addRemote(ws);
+        const remoteBefore = remoteMain(remote);
+
+        const res = vx(['-m', 'fix: both', '-w', 'app-one', '-w', 'app-two'], ws);
+
+        expect(res.status).toBe(0);
+        expect(lines(git(['tag'], ws))).toEqual(['app-one@0.1.2', 'app-two@0.2.7']);
+        expect(remoteMain(remote)).toBe(remoteBefore);
+        expect(remoteHas(ws, 'app-one@0.1.2')).toBe(false);
+        expect(remoteHas(ws, 'app-two@0.2.7')).toBe(false);
+    });
+
+    describe('workspaceAutoPush', () => {
+        const withConfig = (config) => {
+            const ws = freshWorkspace();
+            writeJson(path.join(ws, '.vnxtrc.json'), config);
+            git(['add', '.vnxtrc.json'], ws);
+            git(['commit', '-q', '-m', 'config'], ws);
+            const remote = addRemote(ws);
+            return { ws, remote, before: remoteMain(remote) };
+        };
+
+        test('true pushes the commit and the tag with no -p, and the note is not shown', () => {
+            const { ws, remote } = withConfig({ workspaceAutoPush: true });
+
+            const res = vx(['-m', 'fix: sent', '-w', 'app-one'], ws);
+
+            expect(res.status).toBe(0);
+            expect(res.stdout).not.toContain('autoPush is ignored');
+            expect(remoteMain(remote)).toBe(git(['rev-parse', 'HEAD'], ws));
+            expect(remoteHas(ws, 'app-one@0.1.2')).toBe(true);
+        });
+
+        test('true pushes once for several workspaces', () => {
+            const { ws, remote } = withConfig({ autoPush: false, workspaceAutoPush: true });
+
+            const res = vx(['-m', 'fix: both', '-w', 'app-one', '-w', 'app-two'], ws);
+
+            expect(res.status).toBe(0);
+            expect(remoteMain(remote)).toBe(git(['rev-parse', 'HEAD'], ws));
+            expect(remoteHas(ws, 'app-one@0.1.2')).toBe(true);
+            expect(remoteHas(ws, 'app-two@0.2.7')).toBe(true);
+        });
+
+        test('-dnp overrides true', () => {
+            const { ws, remote, before } = withConfig({ workspaceAutoPush: true });
+
+            const res = vx(['-m', 'fix: held', '-w', 'app-one', '-dnp'], ws);
+
+            expect(res.status).toBe(0);
+            expect(remoteMain(remote)).toBe(before);
+            expect(remoteHas(ws, 'app-one@0.1.2')).toBe(false);
+        });
+
+        test('-dnp wins over -p', () => {
+            const { ws, remote, before } = withConfig({ workspaceAutoPush: true });
+
+            const res = vx(['-m', 'fix: held', '-w', 'app-one', '-p', '-dnp'], ws);
+
+            expect(res.status).toBe(0);
+            expect(remoteMain(remote)).toBe(before);
+        });
+
+        test.each([
+            ['false', false],
+            ['the string "true"', 'true'],
+            ['1', 1],
+            ['null', null]
+        ])('%s does not push', (label, value) => {
+            const { ws, remote, before } = withConfig({ workspaceAutoPush: value });
+
+            const res = vx(['-m', 'fix: held', '-w', 'app-one'], ws);
+
+            expect(res.status).toBe(0);
+            expect(remoteMain(remote)).toBe(before);
+            expect(remoteHas(ws, 'app-one@0.1.2')).toBe(false);
+        });
+
+        test('the setting does not affect a single-package repo, which still follows autoPush', () => {
+            const run = (config) => {
+                const { work, remote } = freshSingleWithRemote();
+                writeJson(path.join(work, '.vnxtrc.json'), config);
+                git(['add', '.vnxtrc.json'], work);
+                git(['commit', '-q', '-m', 'config'], work);
+                const before = remoteMain(remote);
+                const res = vx(['-m', 'fix: single'], work);
+                expect(res.status).toBe(0);
+                return remoteMain(remote) !== before;
+            };
+
+            expect(run({ autoPush: true, workspaceAutoPush: false })).toBe(true);
+            expect(run({ autoPush: false, workspaceAutoPush: true })).toBe(false);
+        });
+
+        test('the dry run says it would push, once', () => {
+            const { ws } = withConfig({ workspaceAutoPush: true });
+
+            const res = vx(['-m', 'fix: look', '-w', 'app-one,app-two', '-d'], ws, '');
+
+            expect(res.status).toBe(0);
+            expect(res.stdout.match(/Push: yes/g)).toHaveLength(1);
+        });
+    });
+
+    test('the dry run says it will not push when only autoPush is set', () => {
+        const ws = freshWorkspace();
+
+        const res = vx(['-m', 'fix: look', '-w', 'app-one', '-d'], ws);
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('Push: no (use -p to push)');
+        expect(res.stdout).not.toContain('Push: yes');
+    });
+
+    test('an earlier unpushed annotated tag goes up with the push, and the preview says so', () => {
+        const ws = freshWorkspace();
+        const remote = addRemote(ws);
+        git(['tag', '-a', 'earlier@9.9.9', '-m', 'made earlier, never pushed'], ws);
+        const before = snapshot(ws);
+        const remoteBefore = remoteMain(remote);
+
+        const preview = vx(['-m', 'fix: look', '-w', 'app-one', '-p', '-d'], ws);
+
+        expect(preview.status).toBe(0);
+        expect(preview.stdout).toContain('Tag:       app-one@0.1.2');
+        expect(preview.stdout).toContain('git push --follow-tags');
+        expect(preview.stdout).toContain('Tags already made locally that this push would also send:\n  earlier@9.9.9');
+        expect(snapshot(ws)).toEqual(before);
+        expect(remoteMain(remote)).toBe(remoteBefore);
+        expect(remoteHas(ws, 'earlier@9.9.9')).toBe(false);
+
+        vx(['-m', 'fix: for real', '-w', 'app-one', '-p'], ws);
+
+        expect(remoteHas(ws, 'earlier@9.9.9')).toBe(true);
+        expect(remoteHas(ws, 'app-one@0.1.2')).toBe(true);
+    });
+
+    test('pushing with no remote is refused before anything changes', () => {
+        const ws = freshWorkspace();
+        const before = snapshot(ws);
+
+        const res = vx(['-m', 'fix: nowhere', '-w', 'app-one', '-p'], ws);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('No remote repository');
+        expect(snapshot(ws)).toEqual(before);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.1');
+    });
+
+    test('pushing from a branch with no upstream is refused before anything changes', () => {
+        const ws = freshWorkspace();
+        const remote = path.join(tmpRoot, `remote-${++counter}.git`);
+        fs.mkdirSync(remote);
+        git(['init', '-q', '--bare', '-b', 'main'], remote);
+        git(['remote', 'add', 'origin', remote], ws);
+        const before = snapshot(ws);
+
+        const res = vx(['-m', 'fix: no upstream', '-w', 'app-one', '-p'], ws);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('no upstream');
+        expect(snapshot(ws)).toEqual(before);
+    });
+
+    test('pushing from a detached HEAD is refused before anything changes', () => {
+        const ws = freshWorkspace();
+        addRemote(ws);
+        git(['checkout', '-q', '--detach'], ws);
+        const before = snapshot(ws);
+
+        const res = vx(['-m', 'fix: detached', '-w', 'app-one', '-p'], ws);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('detached');
+        expect(snapshot(ws)).toEqual(before);
+    });
+
+    test('a push the remote rejects is reported, and the commit and tag stay local', () => {
+        const ws = freshWorkspace();
+        const remote = addRemote(ws);
+        const hook = path.join(remote, 'hooks', 'pre-receive');
+        fs.writeFileSync(hook, '#!/bin/sh\necho "rejected on purpose" >&2\nexit 1\n');
+        fs.chmodSync(hook, 0o755);
+        const remoteBefore = remoteMain(remote);
+
+        const res = vx(['-m', 'fix: refused push', '-w', 'app-one', '-p'], ws);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('made locally, but the push failed');
+        expect(res.stderr).toContain('git push --follow-tags');
+        expect(git(['tag'], ws)).toBe('app-one@0.1.2');
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.2');
+        expect(git(['log', '-1', '--format=%s'], ws)).toBe('fix: refused push');
+        expect(remoteMain(remote)).toBe(remoteBefore);
+    });
+
+    test('the preview warns when the tag already exists', () => {
+        const ws = freshWorkspace();
+        git(['tag', '-a', 'app-one@0.1.2', '-m', 'an old tag'], ws);
+
+        const res = vx(['-m', 'fix: look', '-w', 'app-one', '-dnp', '-d'], ws);
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('A real run would stop here: the tag app-one@0.1.2 already exists');
+    });
+
+    test('the preview warns when pushing is not possible', () => {
+        const ws = freshWorkspace();
+
+        const res = vx(['-m', 'fix: look', '-w', 'app-one', '-p', '-d'], ws);
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('A real run would stop here: No remote repository');
+    });
+});
 
 describe('workspace commit: git hooks', () => {
     test('a pre-commit hook runs, and what it adds ends up in the commit with no phantom changes', () => {
@@ -641,10 +923,6 @@ describe('workspace commit: git hooks', () => {
     });
 });
 
-// =============================================================================
-// Workspace commit: the lockfile
-// =============================================================================
-
 describe('workspace commit: the lockfile', () => {
     test('only the workspace\'s own entry changes in the committed lockfile', () => {
         const ws = freshWorkspace();
@@ -677,7 +955,7 @@ describe('workspace commit: the lockfile', () => {
         const ws = freshWorkspace();
         const lockFile = path.join(ws, 'package-lock.json');
         const lock = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
-        lock.packages['apps/app-two'].version = '9.9.9'; // a stale entry for the other app
+        lock.packages['apps/app-two'].version = '9.9.9';
         fs.writeFileSync(lockFile, JSON.stringify(lock, null, 2) + '\n');
         git(['add', '-A'], ws);
         git(['commit', '-q', '-m', 'stale lockfile entry'], ws);
@@ -725,7 +1003,7 @@ describe('workspace commit: the lockfile', () => {
     test('refuses a lockfile it cannot edit safely, and changes nothing', () => {
         const ws = freshWorkspace();
         const lockFile = path.join(ws, 'package-lock.json');
-        fs.writeFileSync(lockFile, JSON.stringify(JSON.parse(fs.readFileSync(lockFile, 'utf8'))) + '\n'); // minified
+        fs.writeFileSync(lockFile, JSON.stringify(JSON.parse(fs.readFileSync(lockFile, 'utf8'))) + '\n');
         git(['add', '-A'], ws);
         git(['commit', '-q', '-m', 'minified lockfile'], ws);
         const before = snapshot(ws);
@@ -752,18 +1030,920 @@ describe('workspace commit: the lockfile', () => {
     });
 });
 
-// =============================================================================
-// Workspace commit: what is refused for now
-// =============================================================================
+describe('workspace staging: -a patch and -a interactive', () => {
+    const NOTES = 'apps/app-one/src/notes.js';
+
+    // A committed 30 line file with two edits far enough apart to be two hunks
+    function twoHunkWorkspace() {
+        const ws = freshWorkspace();
+        const original = Array.from({ length: 30 }, (_v, i) => `line ${i + 1}`);
+        writeFile(path.join(ws, NOTES), original.join('\n') + '\n');
+        git(['add', '-A'], ws);
+        git(['commit', '-q', '-m', 'add notes'], ws);
+
+        const edited = [...original];
+        edited[1] = 'line 2 EDITED';
+        edited[28] = 'line 29 EDITED';
+        writeFile(path.join(ws, NOTES), edited.join('\n') + '\n');
+        return ws;
+    }
+
+    const committedNotes = ws => git(['show', 'HEAD', '--', NOTES], ws);
+    const tempIndexes = ws => fs.readdirSync(path.join(ws, '.git')).filter(name => name.includes('.vnxt-'));
+    const run = (ws, mode, answers, extra = []) => vx(['-m', 'fix: picked', '-w', 'app-one', '-dnp', '-a', mode, ...extra], ws, answers);
+
+    test('-a p commits only the hunks chosen, and leaves the rest in the working tree', () => {
+        const ws = twoHunkWorkspace();
+
+        const res = run(ws, 'p', 'y\nn\n');
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('y  stage this hunk');
+        expect(res.stdout).toContain('q  quit, staging nothing more');
+        expect(res.stdout).toContain('Choosing nothing stops the run and changes nothing.');
+        expect(committedNotes(ws)).toContain('+line 2 EDITED');
+        expect(committedNotes(ws)).not.toContain('line 29 EDITED');
+        expect([...committedFiles(ws)].sort()).toEqual([NOTES, 'apps/app-one/CHANGELOG.md', 'apps/app-one/package.json', 'package-lock.json'].sort());
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.2');
+        expect(git(['tag', '--list', 'app-one@0.1.2'], ws)).toBe('app-one@0.1.2');
+        expect(git(['diff', '--cached', '--name-only'], ws)).toBe('');
+        expect(statusOf(ws)).toBe(` M ${NOTES}`);
+        expect(fs.readFileSync(path.join(ws, NOTES), 'utf8')).toContain('line 29 EDITED');
+        expect(tempIndexes(ws)).toEqual([]);
+    });
+
+    test('-a p can take the second hunk and leave the first', () => {
+        const ws = twoHunkWorkspace();
+
+        const res = run(ws, 'p', 'n\ny\n');
+
+        expect(res.status).toBe(0);
+        expect(committedNotes(ws)).toContain('+line 29 EDITED');
+        expect(committedNotes(ws)).not.toContain('line 2 EDITED');
+    });
+
+    test('-a p with nothing selected aborts with an error, and nothing changes', () => {
+        const ws = twoHunkWorkspace();
+        const before = snapshot(ws);
+
+        const res = run(ws, 'p', 'n\nn\n');
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('You have not selected any changes in apps/app-one');
+        expect(snapshot(ws)).toEqual(before);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.1');
+        expect(fs.existsSync(path.join(ws, 'apps/app-one/CHANGELOG.md'))).toBe(false);
+        expect(tempIndexes(ws)).toEqual([]);
+    });
+
+    test('-a p quitting straight away aborts the same way', () => {
+        const ws = twoHunkWorkspace();
+        const before = snapshot(ws);
+
+        const res = run(ws, 'p', 'q\n');
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('You have not selected any changes');
+        expect(snapshot(ws)).toEqual(before);
+        expect(tempIndexes(ws)).toEqual([]);
+    });
+
+    test('-a p keeps another workspace\'s staged change out of the commit and still staged', () => {
+        const ws = twoHunkWorkspace();
+        fs.appendFileSync(path.join(ws, 'apps', 'app-two', 'src', 'main.js'), '// pre-staged edit\n');
+        git(['add', 'apps/app-two/src/main.js'], ws);
+
+        const res = run(ws, 'p', 'y\nn\n');
+
+        expect(res.status).toBe(0);
+        expect(committedFiles(ws)).not.toContain('apps/app-two/src/main.js');
+        expect(git(['diff', '--cached', '--name-only'], ws)).toBe('apps/app-two/src/main.js');
+    });
+
+    test('-a p offers only this workspace\'s changes', () => {
+        const ws = twoHunkWorkspace();
+        fs.appendFileSync(path.join(ws, 'apps', 'app-two', 'src', 'main.js'), '// unstaged edit elsewhere\n');
+
+        const res = run(ws, 'p', 'y\nn\n');
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('line 2 EDITED');
+        expect(res.stdout).not.toContain('unstaged edit elsewhere');
+        expect(statusOf(ws)).toContain(' M apps/app-two/src/main.js');
+    });
+
+    test('-a p counts a change already staged in the workspace as selected', () => {
+        const ws = twoHunkWorkspace();
+        git(['add', NOTES], ws);
+        writeFile(path.join(ws, 'apps/app-one/src/other.js'), 'x\n');
+        git(['add', 'apps/app-one/src/other.js'], ws);
+
+        const res = run(ws, 'p', '\n');
+
+        expect(res.status).toBe(0);
+        expect(committedFiles(ws)).toEqual(expect.arrayContaining([NOTES, 'apps/app-one/src/other.js']));
+    });
+
+    test('-a p refuses when the manifest has edits of its own, and nothing changes', () => {
+        const ws = twoHunkWorkspace();
+        const manifest = path.join(ws, 'apps/app-one/package.json');
+        const data = readJson(manifest);
+        data.description = 'an unrelated edit';
+        writeJson(manifest, data);
+        const before = snapshot(ws);
+
+        const res = run(ws, 'p', 'y\ny\n');
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('apps/app-one/package.json has uncommitted changes');
+        expect(snapshot(ws)).toEqual(before);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.1');
+    });
+
+    test('-a p stops before asking anything when the tag already exists', () => {
+        const ws = twoHunkWorkspace();
+        git(['tag', '-a', 'app-one@0.1.2', '-m', 'old'], ws);
+        const before = snapshot(ws);
+
+        const res = run(ws, 'p', 'y\ny\n');
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('app-one@0.1.2 already exists');
+        expect(res.stdout).not.toContain('Choose the changes');
+        expect(snapshot(ws)).toEqual(before);
+        expect(tempIndexes(ws)).toEqual([]);
+    });
+
+    test('-a p cleans up and rolls back when the version bump itself fails after the choice', () => {
+        const ws = twoHunkWorkspace();
+        const before = snapshot(ws);
+
+        const res = run(ws, 'p', 'y\nn\n', ['-sv', 'not-a-version']);
+
+        expect(res.status).not.toBe(0);
+        expect(snapshot(ws)).toEqual(before);
+        expect(git(['diff', '--cached', '--name-only'], ws)).toBe('');
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.1');
+        expect(tempIndexes(ws)).toEqual([]);
+    });
+
+    test('-a p rolls back completely when a pre-commit hook rejects the commit', () => {
+        const ws = twoHunkWorkspace();
+        installHook(ws, 'pre-commit', 'echo "no" >&2\nexit 1');
+        const before = snapshot(ws);
+
+        const res = run(ws, 'p', 'y\nn\n');
+
+        expect(res.status).not.toBe(0);
+        expect(snapshot(ws)).toEqual(before);
+        expect(git(['diff', '--cached', '--name-only'], ws)).toBe('');
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.1');
+        expect(tempIndexes(ws)).toEqual([]);
+    });
+
+    test('a dry run with -a p asks nothing, says so, and changes nothing', () => {
+        const ws = twoHunkWorkspace();
+        const before = snapshot(ws);
+
+        const res = vx(['-m', 'fix: picked', '-w', 'app-one', '-dnp', '-d', '-a', 'p'], ws, '');
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('You will choose the changes to commit inside apps/app-one');
+        expect(res.stdout).toContain('git add -p -- apps/app-one');
+        expect(res.stdout.indexOf('git add -p -- apps/app-one')).toBeLessThan(res.stdout.indexOf('npm version patch'));
+        expect(snapshot(ws)).toEqual(before);
+        expect(tempIndexes(ws)).toEqual([]);
+    });
+
+    test('-a i commits only what was chosen through the menu', () => {
+        const ws = twoHunkWorkspace();
+
+        const res = run(ws, 'i', '5\n1\n\ny\nn\n7\n');
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain("'patch' picks hunks, 'quit' finishes");
+        expect(committedNotes(ws)).toContain('+line 2 EDITED');
+        expect(committedNotes(ws)).not.toContain('line 29 EDITED');
+        expect(git(['diff', '--cached', '--name-only'], ws)).toBe('');
+        expect(tempIndexes(ws)).toEqual([]);
+    });
+
+    test('-a i with nothing selected aborts with an error, and nothing changes', () => {
+        const ws = twoHunkWorkspace();
+        const before = snapshot(ws);
+
+        const res = run(ws, 'i', '7\n');
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('You have not selected any changes');
+        expect(snapshot(ws)).toEqual(before);
+        expect(tempIndexes(ws)).toEqual([]);
+    });
+});
+
+describe('workspace release notes and first versions', () => {
+    const sorted = list => [...list].sort();
+
+    function makePublic(ws, dir) {
+        const file = path.join(ws, dir, 'package.json');
+        const data = readJson(file);
+        data.private = false;
+        writeJson(file, data);
+        git(['add', '-A'], ws);
+        git(['commit', '-q', '-m', 'make public'], ws);
+    }
+
+    function removeVersion(ws, dir) {
+        const file = path.join(ws, dir, 'package.json');
+        const data = readJson(file);
+        delete data.version;
+        writeJson(file, data);
+        const lockFile = path.join(ws, 'package-lock.json');
+        const lock = readJson(lockFile);
+        delete lock.packages[dir].version;
+        writeJson(lockFile, lock);
+        git(['add', '-A'], ws);
+        git(['commit', '-q', '-m', 'drop version'], ws);
+    }
+
+    test('-r writes release notes inside the workspace and commits them', () => {
+        const ws = freshWorkspace();
+
+        const res = vx(['-m', 'fix: with notes', '-w', 'app-one', '-dnp', '-r'], ws, '');
+
+        expect(res.status).toBe(0);
+        const file = 'apps/app-one/release-notes/app-one@0.1.2.md';
+        expect(sorted(committedFiles(ws))).toEqual(sorted([
+            'apps/app-one/CHANGELOG.md',
+            'apps/app-one/package.json',
+            file,
+            'package-lock.json'
+        ]));
+        const notes = fs.readFileSync(path.join(ws, file), 'utf8');
+        expect(notes).toContain('# Release app-one@0.1.2');
+        expect(notes).toMatch(/Released: \d{4}-\d{2}-\d{2} at \d{2}:\d{2}:\d{2} UTC/);
+        expect(notes).toContain('## Changes\n- fix: with notes');
+        expect(notes).toContain('See [CHANGELOG.md](../CHANGELOG.md)');
+        expect(notes).not.toContain('npm install');
+        expect(res.stdout).toContain('Release notes: Generated');
+        expect(git(['status', '--porcelain'], ws)).toBe('');
+        expect(fs.existsSync(path.join(ws, 'release-notes'))).toBe(false);
+    });
+
+    test('-r asks nothing, so it works with no input at all', () => {
+        const ws = freshWorkspace();
+
+        const res = vx(['-m', 'fix: no prompt', '-w', 'app-one', '-dnp', '-r'], ws, '');
+
+        expect(res.status).toBe(0);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.2');
+    });
+
+    test('a public workspace gets an install line, and a scoped name is filed without its slash', () => {
+        const ws = freshWorkspace();
+        makePublic(ws, 'packages/shared-theme');
+
+        const res = vx(['-m', 'fix: theme', '-w', '@fixture/shared-theme', '-dnp', '-r'], ws, '');
+
+        expect(res.status).toBe(0);
+        const file = 'packages/shared-theme/release-notes/fixture-shared-theme@0.0.1.md';
+        const notes = fs.readFileSync(path.join(ws, file), 'utf8');
+        expect(notes).toContain('# Release fixture/shared-theme@0.0.1');
+        expect(notes).toContain('npm install @fixture/shared-theme@0.0.1');
+        expect(committedFiles(ws)).toContain(file);
+    });
+
+    test('-r without a changelog leaves out the changelog link', () => {
+        const ws = freshWorkspace();
+        writeJson(path.join(ws, '.vnxtrc.json'), { autoChangelog: false });
+        git(['add', '-A'], ws);
+        git(['commit', '-q', '-m', 'config'], ws);
+
+        const res = vx(['-m', 'fix: no log', '-w', 'app-one', '-dnp', '-r'], ws, '');
+
+        expect(res.status).toBe(0);
+        const notes = fs.readFileSync(path.join(ws, 'apps/app-one/release-notes/app-one@0.1.2.md'), 'utf8');
+        expect(notes).not.toContain('Full Changelog');
+        expect(fs.existsSync(path.join(ws, 'apps/app-one/CHANGELOG.md'))).toBe(false);
+    });
+
+    test('-r is rolled back completely when a hook rejects the commit', () => {
+        const ws = freshWorkspace();
+        installHook(ws, 'pre-commit', 'echo "no" >&2\nexit 1');
+        const before = snapshot(ws);
+
+        const res = vx(['-m', 'fix: rejected', '-w', 'app-one', '-dnp', '-r'], ws, '');
+
+        expect(res.status).not.toBe(0);
+        expect(snapshot(ws)).toEqual(before);
+        expect(fs.existsSync(path.join(ws, 'apps/app-one/release-notes'))).toBe(false);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.1');
+    });
+
+    test('-r refuses when that release notes file already exists, and changes nothing', () => {
+        const ws = freshWorkspace();
+        writeFile(path.join(ws, 'apps/app-one/release-notes/app-one@0.1.2.md'), 'old\n');
+        git(['add', '-A'], ws);
+        git(['commit', '-q', '-m', 'old notes'], ws);
+        const before = snapshot(ws);
+
+        const res = vx(['-m', 'fix: again', '-w', 'app-one', '-dnp', '-r'], ws, '');
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('app-one@0.1.2.md already exists');
+        expect(snapshot(ws)).toEqual(before);
+        expect(fs.readFileSync(path.join(ws, 'apps/app-one/release-notes/app-one@0.1.2.md'), 'utf8')).toBe('old\n');
+    });
+
+    test('-r works together with -a p', () => {
+        const ws = freshWorkspace();
+        const lines = Array.from({ length: 30 }, (_v, i) => `line ${i + 1}`);
+        writeFile(path.join(ws, 'apps/app-one/src/notes.js'), lines.join('\n') + '\n');
+        git(['add', '-A'], ws);
+        git(['commit', '-q', '-m', 'add notes'], ws);
+        lines[1] = 'line 2 EDITED';
+        writeFile(path.join(ws, 'apps/app-one/src/notes.js'), lines.join('\n') + '\n');
+
+        const res = vx(['-m', 'fix: picked notes', '-w', 'app-one', '-dnp', '-a', 'p', '-r'], ws, 'y\n');
+
+        expect(res.status).toBe(0);
+        expect(committedFiles(ws)).toContain('apps/app-one/release-notes/app-one@0.1.2.md');
+        expect(git(['status', '--porcelain'], ws)).toBe('');
+    });
+
+    test('a dry run with -r lists the file as new and writes nothing', () => {
+        const ws = freshWorkspace();
+        const before = snapshot(ws);
+
+        const res = vx(['-m', 'fix: preview', '-w', 'app-one', '-dnp', '-d', '-r'], ws, '');
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('apps/app-one/release-notes/app-one@0.1.2.md (new)');
+        expect(res.stdout).toContain('git add -- apps/app-one/release-notes/app-one@0.1.2.md');
+        expect(snapshot(ws)).toEqual(before);
+        expect(fs.existsSync(path.join(ws, 'apps/app-one/release-notes'))).toBe(false);
+    });
+
+    test('a workspace with no version refuses a bump type and says to use -sv', () => {
+        const ws = freshWorkspace();
+        removeVersion(ws, 'apps/app-one');
+        const before = snapshot(ws);
+
+        for (const extra of [[], ['-t', 'minor'], ['-d']]) {
+            const res = vx(['-m', 'fix: nothing to bump', '-w', 'app-one', '-dnp', ...extra], ws, '');
+
+            expect(res.status).not.toBe(0);
+            expect(res.stderr).toContain('app-one has no version yet');
+            expect(res.stderr).toContain('-sv 1.0.0');
+            expect(snapshot(ws)).toEqual(before);
+        }
+        expect(readJson(path.join(ws, 'package-lock.json')).packages['apps/app-one'].version).toBeUndefined();
+    });
+
+    test('-sv sets the first version of a workspace with none, in the manifest and the lockfile', () => {
+        const ws = freshWorkspace();
+        removeVersion(ws, 'apps/app-one');
+
+        const res = vx(['-m', 'chore: baseline', '-w', 'app-one', '-sv', '1.0.0', '-dnp'], ws, '');
+
+        expect(res.status).toBe(0);
+        expect(versionOf(ws, 'apps/app-one')).toBe('1.0.0');
+        expect(readJson(path.join(ws, 'package-lock.json')).packages['apps/app-one'].version).toBe('1.0.0');
+        expect(git(['tag', '--list', 'app-one@1.0.0'], ws)).toBe('app-one@1.0.0');
+        expect(res.stdout).toContain('Version: (none) → 1.0.0');
+        expect(res.stdout).not.toContain('undefined');
+        expect(git(['status', '--porcelain'], ws)).toBe('');
+    });
+
+    test('a dry run with -sv on a workspace with no version shows (none) as the starting point', () => {
+        const ws = freshWorkspace();
+        removeVersion(ws, 'apps/app-one');
+
+        const res = vx(['-m', 'chore: baseline', '-w', 'app-one', '-sv', '1.0.0', '-dnp', '-d'], ws, '');
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('Version:   (none) → 1.0.0');
+    });
+});
+
+describe('workspace guards', () => {
+    const release = (ws, extra = []) => vx(['-m', 'fix: release', '-w', 'app-one', '-dnp', ...extra], ws, '');
+    const touch = (ws, dir = 'apps/app-one') => fs.appendFileSync(path.join(ws, dir, 'src', 'main.js'), `// change ${++counter}\n`);
+
+    test('--publish is refused with a reason, and nothing changes', () => {
+        const ws = freshWorkspace();
+        const before = snapshot(ws);
+
+        const res = release(ws, ['--publish']);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('--publish is not supported in workspace mode');
+        expect(res.stderr).toContain('Use -p to push the commit and tag');
+        expect(snapshot(ws)).toEqual(before);
+    });
+
+    test('a detached HEAD is refused even without -p, and nothing changes', () => {
+        const ws = freshWorkspace();
+        git(['checkout', '-q', '--detach'], ws);
+        const before = snapshot(ws);
+
+        const res = release(ws);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('HEAD is detached, so a release commit now would not be on any branch');
+        expect(snapshot(ws)).toEqual(before);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.1');
+    });
+
+    test('a dry run reports the detached HEAD as a reason a real run would stop', () => {
+        const ws = freshWorkspace();
+        git(['checkout', '-q', '--detach'], ws);
+
+        const res = release(ws, ['-d']);
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('A real run would stop here: HEAD is detached');
+    });
+
+    test.each([
+        ['a merge', 'MERGE_HEAD', 'file', 'A merge is in progress'],
+        ['a rebase', 'rebase-merge', 'dir', 'A rebase is in progress'],
+        ['a cherry-pick', 'CHERRY_PICK_HEAD', 'file', 'A cherry-pick is in progress'],
+        ['a revert', 'REVERT_HEAD', 'file', 'A revert is in progress']
+    ])('%s in progress is refused, and nothing changes', (_label, marker, kind, expected) => {
+        const ws = freshWorkspace();
+        const target = path.join(ws, '.git', marker);
+        if (kind === 'dir') fs.mkdirSync(target);
+        else fs.writeFileSync(target, git(['rev-parse', 'HEAD'], ws) + '\n');
+        const before = snapshot(ws);
+
+        const res = release(ws);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain(expected);
+        expect(snapshot(ws)).toEqual(before);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.1');
+    });
+
+    test('releasing again with no changes since the last tag is refused', () => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+        const before = snapshot(ws);
+
+        const res = release(ws);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('No changes in apps/app-one since app-one@0.1.2, so there is nothing to release');
+        expect(res.stderr).toContain('-sv');
+        expect(snapshot(ws)).toEqual(before);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.2');
+    });
+
+    test('a dry run reports "no changes" as a reason a real run would stop', () => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+
+        const res = release(ws, ['-d']);
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('A real run would stop here: No changes in apps/app-one since app-one@0.1.2');
+    });
+
+    test('a staged change in the workspace since the tag lifts the refusal', () => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+        touch(ws);
+        git(['add', 'apps/app-one/src/main.js'], ws);
+
+        expect(release(ws).status).toBe(0);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.3');
+        expect(committedFiles(ws)).toContain('apps/app-one/src/main.js');
+    });
+
+    test('an unstaged change does not lift it without -a, because it would not be committed', () => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+        touch(ws);
+        const before = snapshot(ws);
+
+        const res = release(ws);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('No changes in apps/app-one since app-one@0.1.2');
+        expect(res.stderr).toContain('not staged');
+        expect(res.stderr).toContain('-a tracked or -a all');
+        expect(snapshot(ws)).toEqual(before);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.2');
+    });
+
+    test.each([
+        ['tracked'],
+        ['all'],
+        ['patch']
+    ])('an unstaged change does lift it with -a %s, and the change is committed', mode => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+        touch(ws);
+
+        const res = vx(['-m', 'fix: release', '-w', 'app-one', '-dnp', '-a', mode], ws, mode === 'patch' ? 'y\n' : '');
+
+        expect(res.status).toBe(0);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.3');
+        expect(committedFiles(ws)).toContain('apps/app-one/src/main.js');
+    });
+
+    test('-a tracked does not count an untracked file', () => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+        writeFile(path.join(ws, 'apps/app-one/src/new.js'), 'x\n');
+
+        const res = release(ws, ['-a', 'tracked']);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('No changes in apps/app-one');
+    });
+
+    test('-a i counts an untracked file, so it gets as far as the menu', () => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+        writeFile(path.join(ws, 'apps/app-one/src/new.js'), 'x\n');
+
+        const res = vx(['-m', 'fix: release', '-w', 'app-one', '-dnp', '-a', 'i'], ws, '7\n');
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('You have not selected any changes');
+        expect(res.stderr).not.toContain('No changes in apps/app-one');
+    });
+
+    test('a dry run explains the same refusal for an unstaged change', () => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+        touch(ws);
+
+        const res = release(ws, ['-d']);
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('A real run would stop here: No changes in apps/app-one');
+        expect(res.stdout).toContain('not staged');
+    });
+
+    test('a change committed since the tag counts too', () => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+        touch(ws);
+        git(['add', '-A'], ws);
+        git(['commit', '-q', '-m', 'a committed change'], ws);
+
+        expect(release(ws).status).toBe(0);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.3');
+    });
+
+    test('a change in another workspace does not count', () => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+        touch(ws, 'apps/app-two');
+        const before = snapshot(ws);
+
+        const res = release(ws);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('No changes in apps/app-one');
+        expect(snapshot(ws)).toEqual(before);
+    });
+
+    test('-sv is the deliberate way past the "no changes" refusal', () => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+
+        const res = release(ws, ['-sv', '0.5.0']);
+
+        expect(res.status).toBe(0);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.5.0');
+    });
+
+    test('an untracked file counts only with -a all', () => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+        writeFile(path.join(ws, 'apps/app-one/src/new.js'), 'x\n');
+
+        const refused = release(ws);
+        expect(refused.status).not.toBe(0);
+        expect(refused.stderr).toContain('No changes in apps/app-one');
+
+        const allowed = release(ws, ['-a', 'all']);
+        expect(allowed.status).toBe(0);
+        expect(committedFiles(ws)).toContain('apps/app-one/src/new.js');
+    });
+
+    test("another workspace's tags are not mistaken for this one's", () => {
+        const ws = freshWorkspace();
+        expect(release(ws).status).toBe(0);
+
+        const res = vx(['-m', 'fix: first app-two', '-w', 'app-two', '-dnp'], ws, '');
+
+        expect(res.status).toBe(0);
+        expect(versionOf(ws, 'apps/app-two')).toBe('0.2.7');
+    });
+
+    test('a workspace that has never been released is not held back', () => {
+        const ws = freshWorkspace();
+
+        const res = release(ws);
+
+        expect(res.status).toBe(0);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.2');
+    });
+});
+
+describe('several workspaces in one run', () => {
+    const sorted = list => [...list].sort();
+    const many = (ws, selectors, extra = [], input = '') =>
+        vx(['-m', 'fix: several', '-dnp', ...selectors, ...extra], ws, input);
+    const filesOf = (ws, rev) => sorted(lines(git(['show', '--name-only', '--format=', rev], ws)));
+
+    test('makes one commit and one tag per workspace, in the order given', () => {
+        const ws = freshWorkspace();
+
+        const res = many(ws, ['-w', 'app-two,app-one']);
+
+        expect(res.status).toBe(0);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.2');
+        expect(versionOf(ws, 'apps/app-two')).toBe('0.2.7');
+        expect(git(['rev-list', '--count', 'HEAD~2..HEAD'], ws)).toBe('2');
+        expect(filesOf(ws, 'HEAD~1')).toEqual(['apps/app-two/CHANGELOG.md', 'apps/app-two/package.json', 'package-lock.json']);
+        expect(filesOf(ws, 'HEAD')).toEqual(['apps/app-one/CHANGELOG.md', 'apps/app-one/package.json', 'package-lock.json']);
+        expect(git(['tag', '--points-at', 'HEAD~1'], ws)).toBe('app-two@0.2.7');
+        expect(git(['tag', '--points-at', 'HEAD'], ws)).toBe('app-one@0.1.2');
+        expect(git(['cat-file', '-t', 'app-one@0.1.2'], ws)).toBe('tag');
+        expect(git(['status', '--porcelain'], ws)).toBe('');
+        expect(res.stdout).toContain('2 workspaces released');
+    });
+
+    test('the lockfile ends up with both versions', () => {
+        const ws = freshWorkspace();
+
+        many(ws, ['-w', 'app-one,app-two']);
+
+        const lock = readJson(path.join(ws, 'package-lock.json')).packages;
+        expect(lock['apps/app-one'].version).toBe('0.1.2');
+        expect(lock['apps/app-two'].version).toBe('0.2.7');
+    });
+
+    test('each commit and changelog carries the shared message', () => {
+        const ws = freshWorkspace();
+
+        many(ws, ['-w', 'app-one,app-two']);
+
+        expect(git(['log', '-2', '--format=%s'], ws)).toBe('fix: several\nfix: several');
+        expect(fs.readFileSync(path.join(ws, 'apps/app-one/CHANGELOG.md'), 'utf8')).toContain('- fix: several');
+        expect(fs.readFileSync(path.join(ws, 'apps/app-two/CHANGELOG.md'), 'utf8')).toContain('- fix: several');
+    });
+
+    test('three workspaces, one of them scoped, each get their own tag', () => {
+        const ws = freshWorkspace();
+
+        const res = many(ws, ['-w', 'app-one,app-two,@fixture/shared-theme']);
+
+        expect(res.status).toBe(0);
+        expect(git(['rev-list', '--count', 'HEAD~3..HEAD'], ws)).toBe('3');
+        expect(sorted(lines(git(['tag', '--list', '*@*'], ws)))).toEqual(['app-one@0.1.2', 'app-two@0.2.7', 'fixture/shared-theme@0.0.1']);
+    });
+
+    test('a repeated workspace is made once', () => {
+        const ws = freshWorkspace();
+
+        const res = many(ws, ['-w', 'app-one,app-one,app-two']);
+
+        expect(res.status).toBe(0);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.2');
+        expect(git(['rev-list', '--count', 'HEAD~2..HEAD'], ws)).toBe('2');
+    });
+
+    test('-r writes release notes for each workspace', () => {
+        const ws = freshWorkspace();
+
+        const res = many(ws, ['-w', 'app-one,app-two'], ['-r']);
+
+        expect(res.status).toBe(0);
+        expect(filesOf(ws, 'HEAD~1')).toContain('apps/app-one/release-notes/app-one@0.1.2.md');
+        expect(filesOf(ws, 'HEAD')).toContain('apps/app-two/release-notes/app-two@0.2.7.md');
+    });
+
+    test('-p pushes once, after every commit, and sends every tag', () => {
+        const ws = freshWorkspace();
+        const remote = addRemote(ws);
+
+        const res = vx(['-m', 'fix: pushed', '-w', 'app-one,app-two', '-p'], ws, '');
+
+        expect(res.status).toBe(0);
+        expect(res.stdout.match(/Pushing to remote/g)).toHaveLength(1);
+        expect(res.stdout).toContain('Pushed with tags');
+        expect(git(['rev-parse', 'main'], remote)).toBe(git(['rev-parse', 'HEAD'], ws));
+        expect(sorted(lines(git(['tag', '--list'], remote)))).toEqual(['app-one@0.1.2', 'app-two@0.2.7']);
+    });
+
+    test('a staged change in a workspace that was not chosen stays staged and uncommitted', () => {
+        const ws = freshWorkspace();
+        fs.appendFileSync(path.join(ws, 'packages', 'shared-api', 'src', 'index.js'), '// staged, not chosen\n');
+        git(['add', 'packages/shared-api/src/index.js'], ws);
+
+        const res = many(ws, ['-w', 'app-one,app-two']);
+
+        expect(res.status).toBe(0);
+        expect(git(['diff', '--cached', '--name-only'], ws)).toBe('packages/shared-api/src/index.js');
+        expect(filesOf(ws, 'HEAD')).not.toContain('packages/shared-api/src/index.js');
+        expect(filesOf(ws, 'HEAD~1')).not.toContain('packages/shared-api/src/index.js');
+    });
+
+    test('a problem with one target stops the whole run before anything changes', () => {
+        const ws = freshWorkspace();
+        git(['tag', '-a', 'app-two@0.2.7', '-m', 'old'], ws);
+        fs.appendFileSync(path.join(ws, 'apps', 'app-two', 'src', 'main.js'), '// change\n');
+        const before = snapshot(ws);
+
+        const res = many(ws, ['-w', 'app-one,app-two']);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('Nothing was changed');
+        expect(res.stderr).toContain('[app-two] The tag app-two@0.2.7 already exists');
+        expect(snapshot(ws)).toEqual(before);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.1');
+        expect(fs.existsSync(path.join(ws, 'apps/app-one/CHANGELOG.md'))).toBe(false);
+    });
+
+    test('every problem is listed, not only the first', () => {
+        const ws = freshWorkspace();
+        expect(vx(['-m', 'fix: first', '-w', 'app-one', '-dnp'], ws, '').status).toBe(0);
+        expect(vx(['-m', 'fix: first', '-w', 'app-two', '-dnp'], ws, '').status).toBe(0);
+
+        const res = many(ws, ['-w', 'app-one,app-two']);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('[app-one] No changes in apps/app-one');
+        expect(res.stderr).toContain('[app-two] No changes in apps/app-two');
+    });
+
+    test('a problem every target shares is said once', () => {
+        const ws = freshWorkspace();
+        git(['checkout', '-q', '--detach'], ws);
+
+        const res = many(ws, ['-w', 'app-one,app-two']);
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr.match(/HEAD is detached/g)).toHaveLength(1);
+        expect(res.stderr).not.toContain('[app-one, app-two]');
+    });
+
+    test('a failure part way stops there and says what landed, what did not, and how to carry on', () => {
+        const ws = freshWorkspace();
+        installHook(ws, 'pre-commit', 'f="$(git rev-parse --git-dir)/hookcount"\nn=$(cat "$f" 2>/dev/null || echo 0)\nn=$((n+1))\necho $n > "$f"\n[ "$n" -ge 2 ] && { echo "second commit refused" >&2; exit 1; }\nexit 0');
+        const remote = addRemote(ws);
+
+        const res = vx(['-m', 'fix: partial', '-w', 'app-one,app-two,@fixture/shared-theme', '-p'], ws, '');
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('Stopped at app-two');
+        expect(res.stderr).toContain('Landed before this: app-one@0.1.2');
+        expect(res.stderr).toContain('Not started: @fixture/shared-theme');
+        expect(res.stderr).toContain('Nothing was pushed');
+        expect(res.stderr).toContain('vx -w @fixture/shared-theme -m');
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.2');
+        expect(git(['tag', '--list', 'app-one@0.1.2'], ws)).toBe('app-one@0.1.2');
+        expect(versionOf(ws, 'apps/app-two')).toBe('0.2.6');
+        expect(git(['tag', '--list', 'app-two@*'], ws)).toBe('');
+        expect(git(['tag', '--list'], remote)).toBe('');
+        expect(git(['status', '--porcelain'], ws)).toBe('');
+    });
+
+    test('a workspace with no version stops the run, in a dry run too', () => {
+        const ws = freshWorkspace();
+        const file = path.join(ws, 'apps/app-two/package.json');
+        const data = readJson(file);
+        delete data.version;
+        writeJson(file, data);
+        git(['add', '-A'], ws);
+        git(['commit', '-q', '-m', 'drop version'], ws);
+        const before = snapshot(ws);
+
+        for (const extra of [[], ['-d']]) {
+            const res = many(ws, ['-w', 'app-one,app-two'], extra);
+
+            expect(res.status).not.toBe(0);
+            expect(res.stderr).toContain('app-two has no version yet');
+            expect(snapshot(ws)).toEqual(before);
+        }
+    });
+
+    test('a dry run shows every target, once each, and writes nothing', () => {
+        const ws = freshWorkspace();
+        const before = snapshot(ws);
+
+        const res = many(ws, ['-w', 'app-one,app-two'], ['-d']);
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('Target 1 of 2');
+        expect(res.stdout).toContain('Target 2 of 2');
+        expect(res.stdout).toContain('Tag:       app-one@0.1.2');
+        expect(res.stdout).toContain('Tag:       app-two@0.2.7');
+        expect(res.stdout.match(/Dry run complete/g)).toHaveLength(1);
+        expect(res.stdout.match(/Repo root:/g)).toHaveLength(1);
+        expect(snapshot(ws)).toEqual(before);
+        expect(versionOf(ws, 'apps/app-one')).toBe('0.1.1');
+    });
+
+    test('a dry run with a push says it pushes once, and lists tags that would go with it', () => {
+        const ws = freshWorkspace();
+        addRemote(ws);
+
+        const res = vx(['-m', 'fix: preview', '-w', 'app-one,app-two', '-p', '-d'], ws, '');
+
+        expect(res.status).toBe(0);
+        expect(res.stdout.match(/Push: yes/g)).toHaveLength(1);
+        expect(res.stdout).toContain('once, after every commit');
+    });
+});
+
+describe('--list-workspaces', () => {
+    test('lists every workspace from the repo root, and changes nothing', () => {
+        const ws = freshWorkspace();
+        const before = snapshot(ws);
+
+        const res = vx(['--list-workspaces'], ws, '');
+
+        expect(res.status).toBe(0);
+        for (const name of ['app-one', 'app-two', '@fixture/shared-api', '@fixture/shared-theme', '@fixture/shared-form']) {
+            expect(res.stdout).toContain(name);
+        }
+        expect(res.stdout).toMatch(/app-one\s+apps\/app-one\s+0\.1\.1\s+yes\s+-\s+never released/);
+        expect(res.stdout).toMatch(/app-two\s+apps\/app-two\s+0\.2\.6\s+yes\s+-\s+never released/);
+        expect(snapshot(ws)).toEqual(before);
+    });
+
+    test('-lw is the short form, and it works from inside a workspace folder', () => {
+        const ws = freshWorkspace();
+
+        const res = vx(['-lw'], path.join(ws, 'apps', 'app-one', 'src'), '');
+
+        expect(res.status).toBe(0);
+        expect(res.stdout).toContain('app-two');
+    });
+
+    test('shows the latest tag and whether the workspace has changed since', () => {
+        const ws = freshWorkspace();
+        expect(vx(['-m', 'fix: one', '-w', 'app-one', '-dnp'], ws, '').status).toBe(0);
+        fs.appendFileSync(path.join(ws, 'apps', 'app-two', 'src', 'main.js'), '// change\n');
+        git(['add', 'apps/app-two/src/main.js'], ws);
+        expect(vx(['-m', 'fix: two', '-w', 'app-two', '-dnp'], ws, '').status).toBe(0);
+        fs.appendFileSync(path.join(ws, 'apps', 'app-two', 'src', 'main.js'), '// another change\n');
+        fs.appendFileSync(path.join(ws, 'packages', 'shared-api', 'src', 'index.js'), '// never released, so not compared\n');
+
+        const res = vx(['--list-workspaces'], ws, '');
+
+        expect(res.stdout).toMatch(/app-one\s+apps\/app-one\s+0\.1\.2\s+yes\s+app-one@0\.1\.2\s+none since tag/);
+        expect(res.stdout).toMatch(/app-two\s+apps\/app-two\s+0\.2\.7\s+yes\s+app-two@0\.2\.7\s+unstaged changes only/);
+        expect(res.stdout).toMatch(/shared-api\s+packages\/shared-api\s+0\.0\.0\s+yes\s+-\s+never released/);
+
+        git(['add', 'apps/app-two/src/main.js'], ws);
+        expect(vx(['--list-workspaces'], ws, '').stdout).toMatch(/app-two\s+apps\/app-two\s+0\.2\.7\s+yes\s+app-two@0\.2\.7\s+changed since tag/);
+    });
+
+    test('shows a workspace with no version', () => {
+        const ws = freshWorkspace();
+        const file = path.join(ws, 'apps/app-one/package.json');
+        const data = readJson(file);
+        delete data.version;
+        writeJson(file, data);
+
+        const res = vx(['-lw'], ws, '');
+
+        expect(res.stdout).toMatch(/app-one\s+apps\/app-one\s+\(none\)/);
+    });
+
+    test('needs no message, and is refused with a reason in a repo without workspaces', () => {
+        const { work } = freshSingleWithRemote();
+
+        const res = vx(['-lw'], work, '');
+
+        expect(res.status).not.toBe(0);
+        expect(res.stderr).toContain('does not declare workspaces');
+    });
+
+    test('is in the help text, and the help no longer says one at a time', () => {
+        const ws = freshWorkspace();
+
+        const res = vx(['--help'], ws, '');
+
+        expect(res.stdout).toContain('--list-workspaces');
+        expect(res.stdout).not.toContain('One at a time for now');
+    });
+});
 
 describe('workspace commit: not supported yet', () => {
     test.each([
-        ['-r', ['-r'], 'not supported in workspace mode yet'],
-        ['--publish', ['--publish'], 'not supported in workspace mode yet'],
-        ['-p', ['-p'], 'not supported in workspace mode yet'],
-        ['-a p', ['-a', 'p'], 'not supported in workspace mode yet'],
-        ['-a i', ['-a', 'i'], 'not supported in workspace mode yet'],
-        ['several workspaces', ['-w', 'app-two'], 'One workspace at a time']
+        ['--publish', ['--publish'], 'nothing is published from here'],
+        ['-sv with several workspaces', ['-w', 'app-two', '-sv', '2.0.0'], 'cannot be used with several workspaces'],
+        ['-a p with several workspaces', ['-w', 'app-two', '-a', 'p'], 'works with one workspace at a time'],
+        ['-a i with several workspaces', ['-w', 'app-two', '-a', 'i'], 'works with one workspace at a time']
     ])('%s is refused, and nothing changes', (_label, extra, expected) => {
         const ws = freshWorkspace();
         const before = snapshot(ws);
@@ -801,16 +1981,12 @@ describe('workspace commit: not supported yet', () => {
     test('a refused flag is refused in a dry run as well', () => {
         const ws = freshWorkspace();
 
-        const res = vx(['-m', 'fix: nope', '-w', 'app-one', '-r', '-d'], ws);
+        const res = vx(['-m', 'fix: nope', '-w', 'app-one', '--publish', '-d'], ws);
 
         expect(res.status).not.toBe(0);
-        expect(res.stderr).toContain('not supported in workspace mode yet');
+        expect(res.stderr).toContain('nothing is published from here');
     });
 });
-
-// =============================================================================
-// Workspace preview (-d)
-// =============================================================================
 
 describe('workspace preview (-d) for one workspace', () => {
     test('shows the new version, what changes, what is staged elsewhere and the exact commands', () => {
@@ -854,7 +2030,7 @@ describe('workspace preview (-d) for one workspace', () => {
         expect(res.stdout).toContain('A real run would stop here: package-lock.json has uncommitted changes');
     });
 
-    // A preversion script that leaves a marker at a path the test knows, wherever npm runs it.
+    // A preversion script that leaves a marker at a path the test knows, wherever npm runs it
     function addPreversionMarker(ws) {
         const marker = path.join(tmpRoot, `ran-preversion-${++counter}.txt`).replace(/\\/g, '/');
         const manifestPath = path.join(ws, 'apps', 'app-one', 'package.json');
@@ -869,7 +2045,7 @@ describe('workspace preview (-d) for one workspace', () => {
     test('says when the lockfile is formatted in a way a real run could not edit', () => {
         const ws = freshWorkspace();
         const lockFile = path.join(ws, 'package-lock.json');
-        fs.writeFileSync(lockFile, JSON.stringify(JSON.parse(fs.readFileSync(lockFile, 'utf8'))) + '\n'); // minified
+        fs.writeFileSync(lockFile, JSON.stringify(JSON.parse(fs.readFileSync(lockFile, 'utf8'))) + '\n');
         git(['add', '-A'], ws);
         git(['commit', '-q', '-m', 'minified lockfile'], ws);
 
@@ -901,10 +2077,6 @@ describe('workspace preview (-d) for one workspace', () => {
     });
 });
 
-// =============================================================================
-// Tag handling in a plain single-package repo
-// =============================================================================
-
 describe('single-package repo: tag handling', () => {
     test('puts the version tag on the final commit and pushes it', () => {
         const { work } = freshSingleWithRemote();
@@ -924,7 +2096,7 @@ describe('single-package repo: tag handling', () => {
             expect.arrayContaining(['CHANGELOG.md', 'release-notes/v1.0.1.md'])
         );
         expect(git(['rev-parse', 'v1.0.1^{commit}'], work)).toBe(git(['rev-parse', 'HEAD'], work));
-        expect(git(['rev-list', '--count', 'HEAD'], work)).toBe('2'); // initial commit plus one release commit
+        expect(git(['rev-list', '--count', 'HEAD'], work)).toBe('2');
     });
 
     test('--publish pushes the version tag and the publish tag, both on the final commit', () => {
@@ -957,5 +2129,89 @@ describe('single-package repo: tag handling', () => {
             '- chore: second since publish',
             '- chore: first since publish'
         ]);
+    });
+});
+
+describe('manifest layout after a bump', () => {
+    const { matchLayout } = require('./vnxt.js');
+    const manifestPath = ws => path.join(ws, 'apps', 'app-one', 'package.json');
+    const committedManifest = (ws, rev = 'HEAD') =>
+        execFileSync('git', ['show', `${rev}:apps/app-one/package.json`], { cwd: ws }).toString();
+
+    const withLayout = (eol, finalNewline) => {
+        const ws = freshWorkspace();
+        const original = fs.readFileSync(manifestPath(ws), 'utf8').replace(/\r?\n/g, '\n').replace(/\n+$/, '');
+        const text = original.replace(/\n/g, eol) + (finalNewline ? eol : '');
+        fs.writeFileSync(manifestPath(ws), text);
+        git(['add', 'apps/app-one/package.json'], ws);
+        git(['commit', '-q', '--allow-empty', '-m', 'set layout'], ws);
+        return { ws, text };
+    };
+    const bump = ws => vx(['-m', 'fix: layout', '-w', 'app-one', '-dnp'], ws, '');
+    const expectOnlyVersionChanged = (ws, before) => {
+        expect(committedManifest(ws)).toBe(before.replace('"version": "0.1.1"', '"version": "0.1.2"'));
+        expect(fs.readFileSync(manifestPath(ws), 'utf8')).toBe(committedManifest(ws));
+    };
+
+    test.each([
+        ['LF, with a final newline', '\n', true],
+        ['LF, without a final newline', '\n', false],
+        ['CRLF, with a final newline', '\r\n', true],
+        ['CRLF, without a final newline', '\r\n', false]
+    ])('%s: the bump changes the version and nothing else', (label, eol, finalNewline) => {
+        const { ws, text } = withLayout(eol, finalNewline);
+
+        const res = bump(ws);
+
+        expect(res.status).toBe(0);
+        expectOnlyVersionChanged(ws, text);
+        expect(git(['diff', '--numstat', 'HEAD~1', 'HEAD', '--', 'apps/app-one/package.json'], ws)).toMatch(/^1\t1\t/);
+    });
+
+    test('a rolled-back bump leaves the manifest in its original layout', () => {
+        const { ws, text } = withLayout('\r\n', false);
+        git(['tag', '-a', 'app-one@0.1.2', '-m', 'old'], ws);
+        fs.appendFileSync(path.join(ws, 'apps', 'app-one', 'src', 'main.js'), '// change\n');
+        git(['add', 'apps/app-one/src/main.js'], ws);
+
+        const res = bump(ws);
+
+        expect(res.status).not.toBe(0);
+        expect(fs.readFileSync(manifestPath(ws), 'utf8')).toBe(text);
+    });
+
+    test('several workspaces each keep their own layout', () => {
+        const { ws, text } = withLayout('\r\n', false);
+        const two = path.join(ws, 'apps', 'app-two', 'package.json');
+        const twoText = fs.readFileSync(two, 'utf8').replace(/\n+$/, '');
+        fs.writeFileSync(two, twoText);
+        git(['add', 'apps/app-two/package.json'], ws);
+        git(['commit', '-q', '-m', 'set layout two'], ws);
+
+        const res = vx(['-m', 'fix: both', '-w', 'app-one', '-w', 'app-two', '-dnp'], ws, '');
+
+        expect(res.status).toBe(0);
+        expect(committedManifest(ws, 'HEAD~1')).toBe(text.replace('"version": "0.1.1"', '"version": "0.1.2"'));
+        expect(execFileSync('git', ['show', 'HEAD:apps/app-two/package.json'], { cwd: ws }).toString())
+            .toBe(twoText.replace('"version": "0.2.6"', '"version": "0.2.7"'));
+    });
+
+    describe('matchLayout', () => {
+        test('puts back a missing final newline', () => {
+            expect(matchLayout('{\n  "a": 1\n}', '{\n  "a": 2\n}\n')).toBe('{\n  "a": 2\n}');
+        });
+        test('adds a final newline that npm dropped', () => {
+            expect(matchLayout('{\n  "a": 1\n}\n', '{\n  "a": 2\n}')).toBe('{\n  "a": 2\n}\n');
+        });
+        test('converts to CRLF, and does not double an existing CR', () => {
+            expect(matchLayout('{\r\n  "a": 1\r\n}\r\n', '{\n  "a": 2\n}\n')).toBe('{\r\n  "a": 2\r\n}\r\n');
+            expect(matchLayout('{\r\n  "a": 1\r\n}\r\n', '{\r\n  "a": 2\r\n}\r\n')).toBe('{\r\n  "a": 2\r\n}\r\n');
+        });
+        test('converts to LF when the original was LF', () => {
+            expect(matchLayout('{\n  "a": 1\n}\n', '{\r\n  "a": 2\r\n}\r\n')).toBe('{\n  "a": 2\n}\n');
+        });
+        test('leaves the text alone when there was no original', () => {
+            expect(matchLayout(null, '{"a":2}\n')).toBe('{"a":2}\n');
+        });
     });
 });

@@ -4,14 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-// =============================================================================
-// Test Helpers
-// =============================================================================
-
 const vnxtPath = path.join(__dirname, 'vnxt.js');
 
 function createTestRepo(testDir) {
-    // A folder left behind by a failed cleanup would poison this test, so start clean
     removeDir(testDir, 25);
     fs.mkdirSync(testDir, { recursive: true });
     execSync('git init -b main', { cwd: testDir });
@@ -25,8 +20,7 @@ function createTestRepo(testDir) {
     execSync('git commit -m "initial commit"', { cwd: testDir });
 }
 
-// Windows can hold a lock on a fresh .git folder for a while (antivirus, indexer).
-// Retry with a real pause rather than a spinning loop, and fail loudly if it will not go.
+// Windows can hold a lock on a fresh .git folder for a while (antivirus, indexer)
 function sleep(ms) {
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
@@ -45,7 +39,7 @@ function removeDir(dir, attempts) {
     }
 }
 
-// Cleanup is best effort: createTestRepo clears any leftover before the next use.
+// Cleanup is best effort: createTestRepo clears any leftover before the next use
 function cleanupTestRepo(testDir) {
     try {
         removeDir(testDir, 5);
@@ -59,7 +53,7 @@ function vx(args, testDir) {
         cwd: testDir,
         encoding: 'utf8',
         stdio: 'pipe',
-        input: '\n\n\n\n\n' // satisfy any interactive prompts (e.g. release notes context)
+        input: '\n\n\n\n\n'
     });
 }
 
@@ -80,10 +74,6 @@ function writeConfig(testDir, config) {
     execSync('git add .vnxtrc.json', { cwd: testDir });
     execSync('git commit -m "add config"', { cwd: testDir });
 }
-
-// =============================================================================
-// Version Bumping
-// =============================================================================
 
 describe('Version Bumping', () => {
     const testDir = path.join(__dirname, 'test-bump');
@@ -116,10 +106,6 @@ describe('Version Bumping', () => {
     });
 });
 
-// =============================================================================
-// Auto-detection of Commit Prefix
-// =============================================================================
-
 describe('Auto-detection', () => {
     const testDir = path.join(__dirname, 'test-autodetect');
     beforeEach(() => createTestRepo(testDir));
@@ -147,10 +133,6 @@ describe('Auto-detection', () => {
         expect(readPackageVersion(testDir)).toBe('1.0.1');
     });
 });
-
-// =============================================================================
-// Version Inspection Flags
-// =============================================================================
 
 describe('Version Flags', () => {
     const testDir = path.join(__dirname, 'test-versionflags');
@@ -194,10 +176,6 @@ describe('Version Flags', () => {
     });
 });
 
-// =============================================================================
-// Git Integration
-// =============================================================================
-
 describe('Git Integration', () => {
     const testDir = path.join(__dirname, 'test-git');
     beforeEach(() => createTestRepo(testDir));
@@ -223,8 +201,6 @@ describe('Git Integration', () => {
     });
 
     test('does not crash on first commit (no HEAD~1)', () => {
-        // The initial commit is commit #1; after bump there is a HEAD~1, so
-        // to test the single-commit edge case we need a fresh repo with no prior commits.
         const singleDir = path.join(__dirname, 'test-singlecommit');
         removeDir(singleDir, 25);
         fs.mkdirSync(singleDir, { recursive: true });
@@ -235,7 +211,6 @@ describe('Git Integration', () => {
             path.join(singleDir, 'package.json'),
             JSON.stringify({ name: 'single', version: '1.0.0' }, null, 2)
         );
-        // Stage but don't commit — then bump so the bump IS the first commit
         execSync('git add .', { cwd: singleDir });
         try {
             expect(() => vx('-m "fix: first ever commit" -dnp', singleDir)).not.toThrow();
@@ -244,10 +219,6 @@ describe('Git Integration', () => {
         }
     });
 });
-
-// =============================================================================
-// tagPrefix Configuration
-// =============================================================================
 
 describe('tagPrefix Config', () => {
     const testDir = path.join(__dirname, 'test-tagprefix');
@@ -276,10 +247,6 @@ describe('tagPrefix Config', () => {
         expect(tags).toContain('1.0.1');
     });
 });
-
-// =============================================================================
-// Changelog Generation
-// =============================================================================
 
 describe('Changelog Generation', () => {
     const testDir = path.join(__dirname, 'test-changelog');
@@ -322,10 +289,6 @@ describe('Changelog Generation', () => {
     });
 });
 
-// =============================================================================
-// Release Notes
-// =============================================================================
-
 describe('Release Notes', () => {
     const testDir = path.join(__dirname, 'test-releasenotes');
     beforeEach(() => createTestRepo(testDir));
@@ -347,7 +310,7 @@ describe('Release Notes', () => {
     test('release notes are committed into git', () => {
         vx('-m "fix: notes commit" -r -dnp', testDir);
         const log = execSync('git show --name-only HEAD', { cwd: testDir, encoding: 'utf8' });
-        expect(log).toContain('release-notes/v1.0.1.md'); // git always uses forward slashes
+        expect(log).toContain('release-notes/v1.0.1.md');
     });
 
     test('release notes respect tagPrefix in filename', () => {
@@ -356,10 +319,6 @@ describe('Release Notes', () => {
         expect(fs.existsSync(path.join(testDir, 'release-notes', 'ver-1.0.1.md'))).toBe(true);
     });
 });
-
-// =============================================================================
-// Dry Run Mode
-// =============================================================================
 
 describe('Dry Run Mode', () => {
     const testDir = path.join(__dirname, 'test-dryrun');
@@ -399,10 +358,6 @@ describe('Dry Run Mode', () => {
     });
 });
 
-// =============================================================================
-// Push Behaviour
-// =============================================================================
-
 describe('Push Behaviour', () => {
     const testDir = path.join(__dirname, 'test-push');
     beforeEach(() => createTestRepo(testDir));
@@ -410,8 +365,6 @@ describe('Push Behaviour', () => {
 
     test('-dnp prevents push even when autoPush is true', () => {
         writeConfig(testDir, { autoPush: true });
-        // No remote configured — if it tries to push it will throw
-        // With -dnp it should succeed without pushing
         expect(() => vx('-m "fix: no push" -dnp', testDir)).not.toThrow();
     });
 
@@ -420,10 +373,6 @@ describe('Push Behaviour', () => {
         expect(() => vx('-m "fix: no auto push" -dnp', testDir)).not.toThrow();
     });
 });
-
-// =============================================================================
-// Quiet Mode
-// =============================================================================
 
 describe('Quiet Mode', () => {
     const testDir = path.join(__dirname, 'test-quiet');
@@ -440,10 +389,6 @@ describe('Quiet Mode', () => {
         expect(readPackageVersion(testDir)).toBe('1.0.1');
     });
 });
-
-// =============================================================================
-// Staging (--all / -a)
-// =============================================================================
 
 describe('File Staging', () => {
     const testDir = path.join(__dirname, 'test-staging');
@@ -466,10 +411,6 @@ describe('File Staging', () => {
     });
 });
 
-// =============================================================================
-// Configuration File
-// =============================================================================
-
 describe('Configuration File', () => {
     const testDir = path.join(__dirname, 'test-config');
     beforeEach(() => createTestRepo(testDir));
@@ -487,10 +428,6 @@ describe('Configuration File', () => {
     });
 });
 
-// =============================================================================
-// Error Handling
-// =============================================================================
-
 describe('Error Handling', () => {
     const testDir = path.join(__dirname, 'test-errors');
     beforeEach(() => createTestRepo(testDir));
@@ -501,8 +438,6 @@ describe('Error Handling', () => {
     });
 
     test('fails outside a git repo', () => {
-        // Must live outside this repo: vnxt looks for the repo root above the folder
-        // it is started in, so a folder inside this repo would find this repo.
         const nonGitDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vnxt-nogit-'));
         fs.writeFileSync(path.join(nonGitDir, 'package.json'), JSON.stringify({ name: 'x', version: '1.0.0' }));
         try {
@@ -512,10 +447,6 @@ describe('Error Handling', () => {
         }
     });
 });
-
-// =============================================================================
-// Full Workflow Integration
-// =============================================================================
 
 describe('Full Workflow Integration', () => {
     const testDir = path.join(__dirname, 'test-integration');
@@ -532,7 +463,6 @@ describe('Full Workflow Integration', () => {
         vx('-m "BREAKING: major change" -c -r -dnp', testDir);
         expect(readPackageVersion(testDir)).toBe('2.0.0');
 
-        // Changelog has all three entries
         const changelog = fs.readFileSync(path.join(testDir, 'CHANGELOG.md'), 'utf8');
         expect(changelog).toContain('[1.0.1]');
         expect(changelog).toContain('fix: bug fix');
@@ -541,12 +471,10 @@ describe('Full Workflow Integration', () => {
         expect(changelog).toContain('[2.0.0]');
         expect(changelog).toContain('BREAKING: major change');
 
-        // Release notes all exist in the subdirectory
         expect(fs.existsSync(path.join(testDir, 'release-notes', 'v1.0.1.md'))).toBe(true);
         expect(fs.existsSync(path.join(testDir, 'release-notes', 'v1.1.0.md'))).toBe(true);
         expect(fs.existsSync(path.join(testDir, 'release-notes', 'v2.0.0.md'))).toBe(true);
 
-        // Git tags all exist
         const tags = execSync('git tag', { cwd: testDir, encoding: 'utf8' }).split('\n').filter(Boolean);
         expect(tags).toContain('v1.0.1');
         expect(tags).toContain('v1.1.0');
